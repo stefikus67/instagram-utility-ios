@@ -1,0 +1,38 @@
+name: InstagramUtility
+options:
+  bundleIdPrefix: dev.instagramutility
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  InstagramUtility:
+    type: application
+    platform: iOS
+    sources:
+      - Sources/App
+      - Sources/RoutePolicy
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.instagramutility.app
+        TARGETED_DEVICE_FAMILY: "1"
+    info:
+      path: Generated/Info.plist
+      properties:
+        CFBundleDisplayName: Instagram Utility
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        NSPhotoLibraryUsageDescription: Choose photos to send in Instagram messages.
+        NSCameraUsageDescription: Take photos to send in Instagram messages.
+        NSMicrophoneUsageDescription: Record voice messages in Instagram messages.
+schemes:
+  InstagramUtility:
+    build:
+      targets:
+        InstagramUtility: all

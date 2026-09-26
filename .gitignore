@@ -1,0 +1,15 @@
+.build/
+build/
+DerivedData/
+Generated/
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+*.ipa
+.DS_Store
+.swiftpm/
+Package.resolved
+*.mobileprovision
+*.p12
+*.cer
+.env
