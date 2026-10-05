@@ -12,6 +12,8 @@ enum AuthenticationState: String {
 @MainActor
 final class InstagramSession: ObservableObject {
     @Published private(set) var authState: AuthenticationState = .unknown
+    /// Drives the full-screen web chat fallback.
+    @Published var webChatPresented = false
     let diagnostics = DiagnosticsStore()
     let webView: WKWebView
     private var navigationGuard: NavigationGuard?
@@ -39,6 +41,11 @@ final class InstagramSession: ObservableObject {
 
     func loadInbox() {
         webView.load(URLRequest(url: InstagramRoutePolicy.inboxURL))
+    }
+
+    func openWebChat() {
+        loadInbox()
+        webChatPresented = true
     }
 
     /// Returns to the last conversation (used to leave a DM-media page).
