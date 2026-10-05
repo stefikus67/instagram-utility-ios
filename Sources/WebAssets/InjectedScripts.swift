@@ -23,15 +23,11 @@ public enum InjectedScripts {
 /* Bottom tab bar */
 div[role="menubar"] { display:none !important; }
 /* Feed / Explore / Reels affordances */
-nav[aria-label] a[href="/"],
-nav a[href="/explore"],
-nav a[href^="/explore/"],
-nav a[href="/reels"],
-nav a[href^="/reels/"],
-a[href="/explore"],
-a[href^="/explore/"],
-a[href="/reels"],
-a[href^="/reels/"] { display:none !important; }
+:is(nav, [role="navigation"], [role="menubar"]) a[href="/"],
+:is(nav, [role="navigation"], [role="menubar"]) a[href="/explore"],
+:is(nav, [role="navigation"], [role="menubar"]) a[href^="/explore/"],
+:is(nav, [role="navigation"], [role="menubar"]) a[href="/reels"],
+:is(nav, [role="navigation"], [role="menubar"]) a[href^="/reels/"] { display:none !important; }
 /* Unread-only inbox filter: rows are marked data-iu-read="1" by unreadToggleJS */
 html[data-iu-unread-only] [data-iu-read="1"] { display:none !important; }
 """#
@@ -87,10 +83,14 @@ html[data-iu-unread-only] [data-iu-read="1"] { display:none !important; }
 })();
 """#
 
-    /// On `/reel/...` and `/p/...` pages: stops vertical scrolling (wheel / touchmove / paging keys) and
-    /// swallows clicks on "next reel/video" affordances, so a single opened reel cannot become an endless
-    /// feed. Horizontal gestures (photo carousels) are left alone. Never navigates. Re-evaluated on every
-    /// route change; the listeners are installed once and check the current path each time. Document-end.
+    /// On actual reels only (`/reel/<code>` and `/<user>/reel/<code>`; NOT `/p/` posts): stops the
+    /// single-finger vertical swipe / wheel / paging keys that would advance to the next reel, and swallows
+    /// clicks on "next reel/video" affordances, so one opened reel cannot become an endless feed.
+    /// Never blocks: scrollable content (overflow-y auto/scroll that actually overflows, e.g. a comment
+    /// drawer), anything inside `[role="dialog"]`, multi-touch (pinch-zoom), horizontal gestures, or typing
+    /// in editable fields. Scroll-snap containers (the reel pager itself) do not count as scrollable content.
+    /// Never navigates. The listeners are installed once and check the current path on each event, so route
+    /// changes need no re-arming. Document-end.
     public static let reelLockJS: String = #"""
 (function(){
   try {
@@ -100,8 +100,35 @@ html[data-iu-unread-only] [data-iu-read="1"] { display:none !important; }
     function isLocked() {
       try {
         var path = (window.location && window.location.pathname) || '';
-        return path.indexOf('/reel/') === 0 || path.indexOf('/p/') === 0;
+        var parts = path.split('/').filter(function(s) { return s.length > 0; });
+        if (parts.length >= 2 && parts[0] === 'reel') { return true; }
+        if (parts.length >= 3 && parts[1] === 'reel') { return true; }
+        return false;
       } catch (e) { return false; }
+    }
+
+    // True when the gesture target is, or sits inside, a dialog or genuinely scrollable content.
+    function isExempt(target) {
+      try {
+        var node = target;
+        var hops = 0;
+        while (node && node !== document && hops < 60) {
+          if (node.nodeType === 1 && node !== document.body && node !== document.documentElement) {
+            var role = node.getAttribute ? node.getAttribute('role') : null;
+            if (role === 'dialog') { return true; }
+            if (node.scrollHeight > node.clientHeight + 1 && typeof window.getComputedStyle === 'function') {
+              var cs = window.getComputedStyle(node);
+              var oy = cs && cs.overflowY;
+              var snap = cs && cs.scrollSnapType;
+              var isSnap = !!snap && snap !== 'none' && snap !== '';
+              if ((oy === 'auto' || oy === 'scroll') && !isSnap) { return true; }
+            }
+          }
+          node = node.parentNode;
+          hops++;
+        }
+      } catch (e) {}
+      return false;
     }
 
     function isEditable(el) {
@@ -117,13 +144,7 @@ html[data-iu-unread-only] [data-iu-read="1"] { display:none !important; }
       try {
         var root = document.documentElement;
         if (!root) { return; }
-        if (isLocked()) {
-          root.setAttribute('data-iu-reel-lock', '1');
-          root.style.overscrollBehavior = 'none';
-        } else {
-          root.removeAttribute('data-iu-reel-lock');
-          root.style.overscrollBehavior = '';
-        }
+        root.style.overscrollBehavior = isLocked() ? 'none' : '';
       } catch (e) {}
     }
 
@@ -133,7 +154,7 @@ html[data-iu-unread-only] [data-iu-read="1"] { display:none !important; }
 
     document.addEventListener('wheel', function(ev) {
       try {
-        if (!isLocked()) { return; }
+        if (!isLocked() || ev.ctrlKey || isExempt(ev.target)) { return; }
         if (Math.abs(ev.deltaY) >= Math.abs(ev.deltaX)) { ev.preventDefault(); ev.stopPropagation(); }
       } catch (e) {}
     }, opts);
@@ -148,6 +169,8 @@ html[data-iu-unread-only] [data-iu-read="1"] { display:none !important; }
     document.addEventListener('touchmove', function(ev) {
       try {
         if (!isLocked()) { return; }
+        if (ev.touches && ev.touches.length > 1) { return; }
+        if (isExempt(ev.target)) { return; }
         var t = ev.touches && ev.touches[0];
         if (!t) { return; }
         if (Math.abs(t.clientY - startY) > Math.abs(t.clientX - startX)) {
@@ -159,7 +182,7 @@ html[data-iu-unread-only] [data-iu-read="1"] { display:none !important; }
 
     document.addEventListener('keydown', function(ev) {
       try {
-        if (!isLocked() || isEditable(ev.target)) { return; }
+        if (!isLocked() || isEditable(ev.target) || isExempt(ev.target)) { return; }
         var k = ev.key;
         if (k === 'ArrowDown' || k === 'ArrowUp' || k === 'PageDown' || k === 'PageUp' || k === ' ' || k === 'j' || k === 'k') {
           ev.preventDefault();

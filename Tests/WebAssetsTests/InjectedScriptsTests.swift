@@ -1,5 +1,8 @@
 import XCTest
 @testable import WebAssets
+#if canImport(JavaScriptCore)
+import JavaScriptCore
+#endif
 
 final class InjectedScriptsTests: XCTestCase {
     func testScriptsAreNonEmpty() {
@@ -56,12 +59,16 @@ final class InjectedScriptsTests: XCTestCase {
         XCTAssertTrue(js.contains("/reels/"))
         XCTAssertTrue(js.contains("messageHandlers"))
     }
-    func testReelLockTargetsReelAndPostPaths() {
+    func testReelLockTargetsReelsOnlyAndExemptsScrollableContent() {
         let js = InjectedScripts.reelLockJS
-        XCTAssertTrue(js.contains("/reel/"))
-        XCTAssertTrue(js.contains("/p/"))
+        XCTAssertTrue(js.contains("'reel'"))
+        XCTAssertFalse(js.contains("/p/"), "photo posts must never be scroll-locked")
+        XCTAssertFalse(js.contains("data-iu-reel-lock"), "dead attribute write removed")
         XCTAssertTrue(js.contains("wheel"))
         XCTAssertTrue(js.contains("touchmove"))
+        XCTAssertTrue(js.contains("dialog"), "dialogs (comment drawer) must be exempt")
+        XCTAssertTrue(js.contains("scrollHeight"), "scrollable content must be exempt")
+        XCTAssertTrue(js.contains("touches.length > 1"), "multi-touch (pinch-zoom) must pass through")
     }
     func testUnreadToggleExposesSetterAndAttribute() {
         XCTAssertTrue(InjectedScripts.unreadToggleJS.contains("__iuSetUnreadOnly"))
@@ -75,6 +82,43 @@ final class InjectedScriptsTests: XCTestCase {
         XCTAssertTrue(css.contains("/explore"))
         XCTAssertFalse(css.contains("<"), "CSS must not contain markup")
     }
+    func testChromeCSSLinkRulesAreScopedToNavigation() {
+        // Every explore/reels/home link selector must be prefixed by a navigation container.
+        for line in InjectedScripts.hideChromeCSS.components(separatedBy: "\n") where line.contains("a[href") {
+            XCTAssertTrue(line.contains(":is(nav, [role=\"navigation\"], [role=\"menubar\"]) a[href"),
+                          "unscoped link rule: \(line)")
+        }
+    }
+#if canImport(JavaScriptCore)
+    /// Catches JS syntax errors that string-contains tests cannot. Runs on macOS CI only (no JSC on Linux).
+    func testAllJSParsesAndRunsWithoutThrowing() {
+        let ctx = JSContext()!
+        var thrown: String?
+        ctx.exceptionHandler = { _, e in thrown = e?.toString() }
+        // Minimal stubs so the IIFEs can execute headless.
+        ctx.evaluateScript("""
+        var window = this;
+        window.webkit = {messageHandlers:{iuBlocked:{postMessage:function(){}}}};
+        var history = {pushState:function(){}, replaceState:function(){}};
+        window.history = history;
+        var location = {pathname:'/'};
+        window.location = location;
+        var document = {documentElement:null, body:null, addEventListener:function(){}, querySelector:function(){return null}, querySelectorAll:function(){return []}, createElement:function(){return {}}, head:{appendChild:function(){}}};
+        var screen = {orientation:{}};
+        window.screen = screen;
+        window.addEventListener = function(){};
+        window.dispatchEvent = function(){};
+        var MutationObserver = function(){ this.observe = function(){}; this.disconnect = function(){}; };
+        """)
+        XCTAssertNil(thrown, "stub setup failed: \(thrown ?? "")")
+        for js in InjectedScripts.documentStart() + InjectedScripts.documentEnd() {
+            thrown = nil
+            ctx.evaluateScript(js)
+            XCTAssertNil(thrown, "JS threw or failed to parse: \(thrown ?? "")")
+        }
+    }
+#endif
+
     func testStartAndEndGroupings() {
         XCTAssertEqual(InjectedScripts.documentStart(), [InjectedScripts.orientationFixJS, InjectedScripts.routeGuardJS])
         XCTAssertEqual(InjectedScripts.documentEnd(), [InjectedScripts.reelLockJS, InjectedScripts.unreadToggleJS])
