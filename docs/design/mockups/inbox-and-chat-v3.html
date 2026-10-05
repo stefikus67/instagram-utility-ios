@@ -1,0 +1,165 @@
+<h2>v3 palette (max contrast) + the chat screen</h2>
+<p class="subtitle">iPhone 13 true size (390×844). Pure black background, white text, stronger gold. Left: inbox in v3. Middle: open chat, keyboard closed. Right: typing, with the input bar riding on top of the keyboard.</p>
+
+<style>
+  :root{
+    --bg:#000; --card:#1d1814; --raise:#26201b; --text:#fff; --text2:#ddd2c6; --text3:#c6b9ab; --ph:#a99c8f;
+    --gold:#ffdfa8; --gold-ink:#1a1007; --coral:#f2906f;
+  }
+  .wrap { display:flex; gap:28px; flex-wrap:wrap; justify-content:center; align-items:flex-start; }
+  .ph { width:390px; height:844px; border-radius:47px; overflow:hidden; position:relative; background:var(--bg); color:var(--text);
+        box-shadow:0 14px 40px rgba(0,0,0,.45); font-family:-apple-system,"SF Pro Text","Segoe UI",Roboto,sans-serif; flex:none; display:flex; flex-direction:column; }
+  .ph * { box-sizing:border-box; }
+  .sb { height:47px; flex:none; position:relative; }
+  .sb::after { content:""; position:absolute; top:0; left:50%; transform:translateX(-50%); width:162px; height:32px; background:#111; border-radius:0 0 20px 20px; }
+  .av { border-radius:50%; background:linear-gradient(135deg,#4a3e33,#2b241e); flex:none; }
+  .home { position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:#fff; }
+
+  /* inbox (v3) */
+  .hdr { height:52px; padding:0 16px; display:flex; align-items:flex-end; justify-content:space-between; }
+  .title { font-family:"New York",Georgia,serif; font-weight:500; font-size:34px; line-height:41px; }
+  .ic { width:36px; height:36px; border-radius:18px; background:var(--raise); display:flex; align-items:center; justify-content:center; color:var(--gold); font-size:17px; margin-bottom:3px; }
+  .srch { margin:12px 16px 0; height:36px; border-radius:12px; background:var(--card); color:var(--ph); font-size:17px; padding:0 12px; display:flex; align-items:center; }
+  .stories { display:flex; gap:16px; padding:16px 16px 12px; }
+  .st { width:68px; display:flex; flex-direction:column; align-items:center; gap:6px; font-size:12px; line-height:16px; color:var(--text2); }
+  .ring { width:68px; height:68px; border-radius:34px; padding:3px; background:linear-gradient(135deg,var(--coral),var(--gold)); }
+  .ring.seen { background:#3a322c; }
+  .ring .av { width:62px; height:62px; border:3px solid var(--bg); }
+  .me { position:relative; width:68px; height:68px; } .me .av { width:68px; height:68px; }
+  .plus { position:absolute; right:0; bottom:0; width:22px; height:22px; border-radius:11px; background:var(--gold); color:var(--gold-ink); font-size:16px; font-weight:700; display:flex; align-items:center; justify-content:center; border:2px solid var(--bg); }
+  .card { margin:0 16px 8px; height:72px; border-radius:20px; background:var(--card); box-shadow:inset 0 1px 0 rgba(255,255,255,.06); display:flex; align-items:center; gap:12px; padding:0 16px 0 10px; }
+  .card .av { width:52px; height:52px; }
+  .t { flex:1; min-width:0; }
+  .n { font-size:17px; line-height:22px; font-weight:600; }
+  .m { font-size:15px; line-height:20px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .unread .m { color:var(--text); font-weight:500; }
+  .meta { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  .tm { font-size:13px; color:var(--text3); }
+  .dot { width:10px; height:10px; border-radius:5px; background:var(--gold); }
+  .bar { position:absolute; left:24px; right:24px; bottom:28px; height:64px; border-radius:32px; background:rgba(38,32,27,.95); display:flex; justify-content:space-around; align-items:center; }
+  .tab { display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10px; font-weight:500; color:var(--text3); }
+  .tab .gl { width:24px; height:24px; border-radius:7px; border:2px solid currentColor; }
+  .tab.on { color:var(--gold); }
+
+  /* chat */
+  .chdr { height:56px; flex:none; display:flex; align-items:center; gap:10px; padding:0 12px 0 8px; border-bottom:1px solid #1d1814; }
+  .back { width:32px; height:44px; display:flex; align-items:center; justify-content:center; color:var(--gold); font-size:28px; line-height:1; }
+  .chdr .av { width:36px; height:36px; }
+  .who .n { font-size:17px; line-height:22px; }
+  .who .s { font-size:13px; line-height:16px; color:var(--text3); }
+  .thread { flex:1; overflow:hidden; padding:12px 16px 8px; display:flex; flex-direction:column; justify-content:flex-end; gap:2px; }
+  .sep { text-align:center; font-size:12px; color:var(--text3); margin:12px 0 8px; }
+  .b { max-width:75%; padding:8px 12px; font-size:17px; line-height:22px; border-radius:20px; }
+  .in { align-self:flex-start; background:var(--raise); color:var(--text); }
+  .out { align-self:flex-end; background:var(--gold); color:var(--gold-ink); }
+  .grp { margin-top:8px; }
+  .photo { align-self:flex-start; width:220px; height:270px; border-radius:20px; background:linear-gradient(160deg,#6b5546,#2e2621 60%,#1a1511); position:relative; }
+  .photo::after { content:"Photo"; position:absolute; left:12px; bottom:10px; font-size:12px; color:#fff; opacity:.8; }
+  .voice { align-self:flex-end; display:flex; align-items:center; gap:10px; width:236px; background:var(--gold); color:var(--gold-ink); border-radius:20px; padding:8px 12px 8px 8px; }
+  .play { width:32px; height:32px; border-radius:16px; background:var(--gold-ink); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:12px; flex:none; }
+  .wave { flex:1; height:24px; background:repeating-linear-gradient(90deg, var(--gold-ink) 0 2px, transparent 2px 5px); -webkit-mask:linear-gradient(90deg,#000 45%, rgba(0,0,0,.35) 45%); mask:linear-gradient(90deg,#000 45%, rgba(0,0,0,.35) 45%); clip-path:polygon(0 40%,5% 20%,10% 50%,15% 10%,20% 35%,25% 0,30% 45%,35% 15%,40% 30%,45% 5%,50% 40%,55% 20%,60% 50%,65% 25%,70% 10%,75% 40%,80% 20%,85% 45%,90% 30%,95% 15%,100% 40%,100% 100%,0 100%); }
+  .dur { font-size:13px; font-weight:600; }
+  .reel { align-self:flex-start; width:200px; border-radius:20px; background:var(--raise); overflow:hidden; }
+  .reel .thumb { height:150px; background:linear-gradient(160deg,#4b3b5e,#1c1626); position:relative; }
+  .reel .thumb::after { content:"▶"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:26px; color:#fff; opacity:.9; }
+  .reel .cap { padding:8px 12px 10px; font-size:13px; color:var(--text2); }
+  .reel .cap b { color:var(--text); font-weight:600; }
+  .seen { align-self:flex-end; font-size:12px; color:var(--text3); margin-top:4px; }
+
+  .inbar { flex:none; display:flex; align-items:flex-end; gap:8px; padding:8px 12px 8px; }
+  .round { width:40px; height:40px; border-radius:20px; display:flex; align-items:center; justify-content:center; flex:none; font-size:17px; }
+  .cam { background:var(--gold); color:var(--gold-ink); }
+  .field { flex:1; min-height:40px; border-radius:20px; background:var(--card); border:1px solid #2f2822; display:flex; align-items:center; padding:0 6px 0 14px; font-size:17px; color:var(--ph); gap:4px; }
+  .field .txt { flex:1; }
+  .field .typed { color:var(--text); }
+  .mini { width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--text2); font-size:17px; }
+  .send { background:var(--gold); color:var(--gold-ink); font-weight:700; }
+  .safe { height:34px; flex:none; }
+  .kb { height:291px; flex:none; background:#1c1c1e; display:flex; flex-direction:column; gap:10px; padding:10px 4px 0; }
+  .kr { display:flex; gap:6px; justify-content:center; }
+  .k { width:32px; height:42px; border-radius:5px; background:#474747; }
+  .kb .lbl { text-align:center; color:#8e8e93; font-size:12px; margin-top:auto; padding-bottom:40px; }
+
+  .notes { max-width:1220px; margin:22px auto 0; font-size:14px; line-height:1.55; }
+  .notes table { width:100%; border-collapse:collapse; }
+  .notes td { padding:5px 8px; border-bottom:1px solid rgba(128,128,128,.25); vertical-align:top; }
+  .notes td:first-child { width:190px; opacity:.75; }
+</style>
+
+<div class="wrap">
+  <!-- Inbox v3 -->
+  <div class="ph">
+    <div class="sb"></div>
+    <div class="hdr"><div class="title">Messages</div><div class="ic">✎</div></div>
+    <div class="srch">Search chats</div>
+    <div class="stories">
+      <div class="st"><div class="me"><div class="av"></div><div class="plus">+</div></div>You</div>
+      <div class="st"><div class="ring"><div class="av"></div></div>Ana</div>
+      <div class="st"><div class="ring"><div class="av"></div></div>Luka</div>
+      <div class="st"><div class="ring seen"><div class="av"></div></div>Maja</div>
+    </div>
+    <div class="card unread"><div class="av"></div><div class="t"><div class="n">Ana</div><div class="m">sent you a reel</div></div><div class="meta"><div class="tm">12:41</div><div class="dot"></div></div></div>
+    <div class="card"><div class="av"></div><div class="t"><div class="n">Luka</div><div class="m">Voice message · 0:14</div></div><div class="meta"><div class="tm">12:04</div></div></div>
+    <div class="card"><div class="av"></div><div class="t"><div class="n">Maja</div><div class="m">haha ok see you there</div></div><div class="meta"><div class="tm">Tue</div></div></div>
+    <div class="card"><div class="av"></div><div class="t"><div class="n">Tim</div><div class="m">You: sent a photo</div></div><div class="meta"><div class="tm">Mon</div></div></div>
+    <div class="bar"><div class="tab on"><div class="gl"></div>Messages</div><div class="tab"><div class="gl"></div>Find people</div><div class="tab"><div class="gl"></div>You</div></div>
+    <div class="home"></div>
+  </div>
+
+  <!-- Chat, keyboard closed -->
+  <div class="ph">
+    <div class="sb"></div>
+    <div class="chdr"><div class="back">‹</div><div class="av"></div><div class="who"><div class="n">Ana</div><div class="s">Active 5 min ago</div></div></div>
+    <div class="thread">
+      <div class="sep">Today 12:30</div>
+      <div class="b in">look what i found 😂</div>
+      <div class="reel"><div class="thumb"></div><div class="cap"><b>Reel</b> · tap to watch this one</div></div>
+      <div class="b out grp">omg stop</div>
+      <div class="b out">we're doing this on saturday</div>
+      <div class="photo grp"></div>
+      <div class="b in">the view from yesterday</div>
+      <div class="voice grp"><div class="play">▶</div><div class="wave"></div><div class="dur">0:14</div></div>
+      <div class="seen">Seen</div>
+    </div>
+    <div class="inbar">
+      <div class="round cam">◉</div>
+      <div class="field"><span class="txt">Message…</span><span class="mini">▣</span><span class="mini">🎙</span></div>
+    </div>
+    <div class="safe"></div>
+    <div class="home"></div>
+  </div>
+
+  <!-- Chat, typing -->
+  <div class="ph">
+    <div class="sb"></div>
+    <div class="chdr"><div class="back">‹</div><div class="av"></div><div class="who"><div class="n">Ana</div><div class="s">Active now</div></div></div>
+    <div class="thread">
+      <div class="b out">we're doing this on saturday</div>
+      <div class="photo grp" style="height:150px"></div>
+      <div class="b in">the view from yesterday</div>
+      <div class="voice grp"><div class="play">▶</div><div class="wave"></div><div class="dur">0:14</div></div>
+      <div class="seen">Seen</div>
+    </div>
+    <div class="inbar">
+      <div class="round cam">◉</div>
+      <div class="field"><span class="txt typed">saturday works, what time</span></div>
+      <div class="round send">↑</div>
+    </div>
+    <div class="kb">
+      <div class="kr"><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div></div>
+      <div class="kr"><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div></div>
+      <div class="kr"><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div><div class="k"></div></div>
+      <div class="lbl">keyboard (291 pt)</div>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <table>
+    <tr><td>Palette v3 (measured)</td><td>Pure black background. Names 17.6:1 · previews 11.8:1 · times 9.2:1 · inactive tabs 8.4:1 · your gold bubbles' text 14.6:1 · incoming bubble text 16.1:1.</td></tr>
+    <tr><td>Tab bar in chats</td><td>Hidden while a chat is open. This is the fix for the Send button being covered.</td></tr>
+    <tr><td>Input bar</td><td>40 pt controls, 20 pt radius. Camera on the left (gold). Gallery + mic inside the field. While you type, the mic becomes the gold Send button. Pinned to the top of the keyboard and moves with it.</td></tr>
+    <tr><td>Bubbles</td><td>Max 75% of screen width, 20 pt radius, 17 pt text (same as names). 2 pt between messages in a run, 8 pt between runs. Yours are gold, theirs dark.</td></tr>
+    <tr><td>Media</td><td>Photos 220 pt wide; tap = full screen with Save. Voice: play, waveform, duration; hold the mic to record, slide to cancel. Shared reel: one card, opens only that reel in our own player.</td></tr>
+  </table>
+</div>
