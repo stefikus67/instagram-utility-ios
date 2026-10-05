@@ -1,13 +1,15 @@
 // swift-tools-version:5.9
 import PackageDescription
 
-// This package exists ONLY so the pure-logic route policy can be unit tested with `swift test`
-// (no simulator, no Instagram). The app itself is built from project.yml via XcodeGen.
+// Pure-logic targets only, so `swift test` runs anywhere (Linux, macOS) without a simulator or Instagram.
+// The iOS app is built from project.yml via XcodeGen and compiles these same source folders.
 let package = Package(
-    name: "RoutePolicy",
+    name: "InstagramUtilityCore",
     platforms: [.macOS(.v13), .iOS(.v16)],
     targets: [
         .target(name: "RoutePolicy", path: "Sources/RoutePolicy"),
+        .target(name: "DesignTokens", path: "Sources/DesignTokens"),
         .testTarget(name: "RoutePolicyTests", dependencies: ["RoutePolicy"], path: "Tests/RoutePolicyTests"),
+        .testTarget(name: "DesignTokensTests", dependencies: ["DesignTokens"], path: "Tests/DesignTokensTests"),
     ]
 )
