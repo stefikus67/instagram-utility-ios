@@ -6,7 +6,7 @@
 - Three native tabs: Messages (web inbox), Find people (native username field), You (Post story, Diagnostics, Reset).
 - Dead M1 native-inbox code removed. Web-chat concept removed (Messages IS the web inbox now).
 - **Device checklist** (`docs/IPHONE_INSTALL.md` §4): the acceptance gate — 9 steps, 6 of which involve injected JS (steps 1, 2, 4, 6, 7, 8). Owner to run and report.
-- CI run (once available): record run id + artifact size + name in this file under "CI acceptance".
+- **CI acceptance:** run 37352237383, artifact `InstagramUtility-unsigned-ipa` (184,540 bytes / ~0.18 MB). Unit tests passed; build successful.
 
 ## Known-fragile items to re-verify after Instagram site changes
 Injected-JS selectors that are likely to break if Instagram's markup changes:
