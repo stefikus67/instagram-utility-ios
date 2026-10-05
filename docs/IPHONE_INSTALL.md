@@ -23,20 +23,15 @@ SideStore → My Apps → **+** → pick the IPA → it signs with your free App
   with an App ID error, remove another sideloaded app.
 - No push notifications via APNs (accepted for V1).
 
-## 4. Milestone 1 checklist (on the iPhone)
-1. Install the new IPA in SideStore (it replaces the POC; your login may need to be redone once).
-2. First launch: a sheet with Instagram's real login page. Log in (2FA as normal). The sheet closes.
-3. Messages tab: dark Espresso design, "No chats here yet" and an Open web chat button.
-4. Force-quit, reopen. **No login sheet** — you stay logged in.
-   If the sheet flashes and then closes by itself, tell Claude — the app was still loading your saved login.
-5. You → Preview → turn on **Show sample inbox**. Messages shows 5 sample chats and a stories row.
-   Check the look: spacing, sizes, contrast. Note anything that feels off and in which direction.
-6. Type "lu" in Search chats → only Luka remains.
-7. Tap a chat → web chat opens full screen. Open a conversation, tap the message field:
-   **the field and Send sit above the keyboard.** Close the keyboard: **Send is visible** (no tab bar).
-8. In web chat, record a voice message (iOS asks for the microphone the first time).
-9. Open a reel someone sent you with sound on, tap **Done** — the sound must stop.
-10. Done → back in the app. You → Reset Instagram Session → confirm → the login sheet appears.
-11. Only if it happens: if Instagram logs you out while web chat is open (web chat shows Instagram's login page), tap **Done**. The login sheet must appear. If it doesn't, tell Claude. Skip this step if it never happens.
-Known and expected: in web chat you can still swipe from a shared reel to other reels. That is fixed
-by the native viewer in milestone 3; web chat is only the fallback.
+## 4. Milestone 2 device checklist (on the iPhone)
+1. Install the new IPA in SideStore (LocalDevVPN on). Log in. Messages shows Instagram's inbox, and Instagram's own bottom nav bar is **not visible**.
+2. Try to reach Home / Explore / Reels (tap any links). Each bounces back to a safe page; You → Diagnostics "Blocked navigations" goes up. Report any way through.
+3. Open a chat; send a text and a photo; the field + Send sit above the keyboard; Send stays visible.
+4. Open a reel someone sent you in a DM → it opens → swiping/scrolling does **not** move to another reel. (This was the main POC failure.) But a reel's comments / a post's caption should still scroll.
+5. Find people → type a username → their profile opens (grid, highlights). Open one of their posts; it shows; you can't swipe to a stranger's post.
+6. Open that person's stories/highlights; watch a few; closing returns cleanly; no jump into suggested content.
+7. You → Post a story → pick a photo → it does **not** say "rotate your device" → post it (delete after). Close returns to Messages.
+8. Messages → "Unread only" on → read chats hide. Relaunch the app → the toggle is still on.
+9. You → Reset Instagram Session → confirm → the login page returns.
+
+**Note which steps use injected JS** (1, 2, 4, 6, 7, 8) — if any misbehaves, report exactly what you saw; those are selector-dependent and may need a one-line follow-up tweak.

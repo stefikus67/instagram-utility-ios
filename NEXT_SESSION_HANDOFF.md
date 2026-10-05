@@ -1,21 +1,27 @@
 # Handoff — Instagram Utility
 
-## State (2026-10-05)
-- Milestone 1 (foundation) implemented per `docs/superpowers/plans/2026-10-05-m1-foundation.md`.
-- CI: green on branch m1-foundation (not merged to main yet); run 37298454861, artifact `InstagramUtility-unsigned-ipa` (232 KB).
-- Device checklist (`docs/IPHONE_INSTALL.md` §4): not yet run by the owner.
+## State (2026-10-06 — M2 shipped)
+**Milestone 2 (website product)** shipped per `docs/superpowers/plans/2026-10-06-m2-website-product.md`.
+- Architecture: Instagram's mobile website in WKWebView, made focused by: expanded route firewall (profiles/stories/create allowed; feed/explore/reels blocked), content rule list blocking feed/explore/reels/ads at network layer, injected CSS/JS (hide IG nav, lock reel scroll in DMs, screen.orientation override, unread-only inbox toggle).
+- Three native tabs: Messages (web inbox), Find people (native username field), You (Post story, Diagnostics, Reset).
+- Dead M1 native-inbox code removed. Web-chat concept removed (Messages IS the web inbox now).
+- **Device checklist** (`docs/IPHONE_INSTALL.md` §4): the acceptance gate — 9 steps, 6 of which involve injected JS (steps 1, 2, 4, 6, 7, 8). Owner to run and report.
+- CI run (once available): record run id + artifact size + name in this file under "CI acceptance".
 
-## Next
-1. Owner runs the milestone 1 checklist on the iPhone 13 and reports.
-2. DONE 2026-10-05: endpoint discovery. Results in `docs/notes/instagram-endpoints.md` (inbox, thread + paging, send text, send photo,
-   search, profile/grid/highlights/suggested, stories tray + viewer, post story). All plain HTTP; no WebSocket seen. Gaps listed at the bottom of that file.
-3. Write the next plan (Opus): InstagramClient (+ rate limiter, debounced search, token fetch for fb_dtsg/lsd) → live inbox → native chat → Find people (milestone 2).
+## Known-fragile items to re-verify after Instagram site changes
+Injected-JS selectors that are likely to break if Instagram's markup changes:
+- IG bottom nav: `div[role=menubar]` (hide injection)
+- Inbox unread marker: selector TBD pending implementation
+- Next-reel affordance: selector TBD pending implementation  
+- Reel-pager scroll-snap: selector TBD pending implementation
+- Logged-out "/" redirect: verify no infinite loop if "/" redirects when logged out
+- Story-cover composer overlap/file-picker: verify no overlap and file input works
 
-## Must-fix items carried into the live-client plan (from milestone 1 reviews)
-- InboxLoader writes the cache after a cancelled fetch; with real data a cache file could survive Reset. Fix: Reset awaits the in-flight reload task, or the cache uses a generation token (Task.checkCancellation alone leaves a window).
-- Inbox reloads on every tab switch and not on return-from-background; spec §5 wants app-open + pull-to-refresh only. Also loses search text on tab switch.
-- DiskCache lives in Application Support (backed up to iCloud). Move to Caches or set isExcludedFromBackup before real data.
-- RelativeTimestamp builds a DateFormatter per row and `now` goes stale while the app is open — cache formatters, refresh `now`.
-- Shared WKWebView moving between login sheet and web chat is fragile: use a container view and only detach in dismantleUIView if still its superview (M2).
-- `lastDirectURL` survives across web-chat sessions ("Back to chat" may land on an old thread).
-- Deferred polish: accessibility (selected-tab trait, labels on IconButton/SearchField, hide Avatar from VoiceOver), InboxStore has no unit tests, `webView.backgroundColor = .black` literal.
+**Content-rule GraphQL identifier:** must be bumped whenever rules change (current: TBD pending CI run).
+
+## Deferred minors from per-task reviews (revisit if time permits)
+- Profile deny-list (block repeated navigation to same profile).
+- Fail-open content rules (currently fail-closed; add no-op fallback if rule matching fails).
+- Cache keyed by identifier not hash (simpler invalidation).
+- Unread toggle visible inside conversations (toggle currently inbox-only).
+- Flash-of-chrome at document-end (brief flicker of IG nav before JS hides it).
