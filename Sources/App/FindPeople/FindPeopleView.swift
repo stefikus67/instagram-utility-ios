@@ -19,7 +19,9 @@ struct FindPeopleView: View {
                 WebSurface()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .onAppear { surface.show(.search) }
+            // Reload: tapping a result navigates the shared web view to a profile while the surface stays .search,
+            // so a plain show(.search) would be skipped as already-current and return to that profile.
+            .onAppear { surface.show(.search, reload: true) }
         }
     }
 }

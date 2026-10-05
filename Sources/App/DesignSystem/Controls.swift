@@ -16,26 +16,6 @@ struct IconButton: View {
     }
 }
 
-struct SearchField: View {
-    @Binding var text: String
-    let placeholder: String
-
-    var body: some View {
-        HStack(spacing: Spacing.s) {
-            Image(systemName: "magnifyingglass").foregroundStyle(Theme.placeholder)
-            TextField("", text: $text, prompt: Text(placeholder).foregroundColor(Theme.placeholder))
-                .foregroundStyle(Theme.text)
-                .tint(Theme.gold)
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-        }
-        .font(Theme.body)
-        .padding(.horizontal, Spacing.m)
-        .frame(height: Metrics.searchHeight)
-        .background(RoundedRectangle(cornerRadius: Radius.search, style: .continuous).fill(Theme.card))
-    }
-}
-
 struct GoldCapsuleButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
