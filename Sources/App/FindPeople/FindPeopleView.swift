@@ -34,6 +34,7 @@ struct FindPeopleView: View {
                 WebSurface()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+            .onAppear { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focused = true } }
         }
     }
 
