@@ -1,13 +1,16 @@
 import SwiftUI
 
-/// App shell: three tabs in a floating pill, login sheet when signed out, web chat as a full-screen cover.
+/// App shell: three tabs in a floating pill, login sheet when signed out. One web view is shared and
+/// re-pointed per tab through `WebSurfaceController.show(_:)`.
 struct RootView: View {
     @EnvironmentObject private var session: InstagramSession
+    @EnvironmentObject private var surface: WebSurfaceController
     @State private var tab: AppTab = .messages
 
     private var loginRequired: Binding<Bool> {
-        // While web chat is open, Instagram's login page shows inside it; the sheet appears after Done.
-        Binding(get: { session.authState == .loggedOut && !session.webChatPresented }, set: { _ in })
+        // A full-screen web presentation (story creation) shows Instagram's own pages, login included,
+        // so the sheet must not stack on it; it appears after that closes.
+        Binding(get: { session.authState == .loggedOut && !surface.isPresentedFullScreen }, set: { _ in })
     }
 
     var body: some View {
@@ -33,15 +36,19 @@ struct RootView: View {
         .sheet(isPresented: loginRequired) {
             LoginView().interactiveDismissDisabled()
         }
-        .fullScreenCover(isPresented: $session.webChatPresented, onDismiss: { session.parkWebView() }) {
-            WebChatView()
+        .onChange(of: tab) { newTab in
+            if newTab == .messages { surface.show(.messages) } else { surface.silence() }
+        }
+        .onChange(of: session.authState) { state in
+            // After login (or Reset then login) the web view is still on Instagram's login flow.
+            if state == .authenticated { surface.show(.messages) }
         }
         .task { await session.start() }
     }
 
     @ViewBuilder private var screen: some View {
         switch tab {
-        case .messages: InboxView()
+        case .messages: MessagesView()
         case .findPeople: FindPeopleView()
         case .you: YouView()
         }

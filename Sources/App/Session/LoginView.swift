@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Instagram's own login page, shown whenever there is no session. Cannot be swiped away.
 struct LoginView: View {
-    @EnvironmentObject private var session: InstagramSession
+    @EnvironmentObject private var surface: WebSurfaceController
 
     var body: some View {
         VStack(spacing: 0) {
@@ -14,7 +14,7 @@ struct LoginView: View {
                     .multilineTextAlignment(.center)
             }
             .padding(Spacing.l)
-            InstagramWebView(webView: session.webView)
+            InstagramWebView(webView: surface.webView)
         }
         .background(Theme.bg)
     }

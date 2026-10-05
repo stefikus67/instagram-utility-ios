@@ -7,73 +7,43 @@ enum AuthenticationState: String {
     case authenticated = "Logged in"
 }
 
-/// Owns the one WKWebView that holds the Instagram login (persistent data store, so the session
-/// survives restarts). Credentials are typed into Instagram's own page; this class never sees them.
-/// The same web view backs the login sheet and the web chat fallback — never both at once.
+/// Tracks whether there is an Instagram login, and drives login/reset. The one WKWebView (persistent data
+/// store, so the session survives restarts) is owned by `WebSurfaceController`; this class only reads it
+/// and points it at the login page. Credentials are typed into Instagram's own page and never seen here.
 @MainActor
 final class InstagramSession: NSObject, ObservableObject, WKHTTPCookieStoreObserver {
     @Published private(set) var authState: AuthenticationState = .unknown
-    @Published var webChatPresented = false
-    let diagnostics = DiagnosticsStore()
-    let webView: WKWebView
-    private var navigationGuard: NavigationGuard?
+    let diagnostics: DiagnosticsStore
+    let surface: WebSurfaceController
     private var started = false
 
+    var webView: WKWebView { surface.webView }
+
     override init() {
-        let config = WKWebViewConfiguration()
-        config.websiteDataStore = .default()
-        config.allowsInlineMediaPlayback = true
-        config.mediaTypesRequiringUserActionForPlayback = .all
-        // Present as mobile Safari so Instagram serves its normal mobile website.
-        config.applicationNameForUserAgent = "Version/17.0 Mobile/15E148 Safari/604.1"
-        webView = WKWebView(frame: .zero, configuration: config)
-        webView.allowsBackForwardNavigationGestures = false
-        webView.isOpaque = false
-        webView.backgroundColor = .black
+        let diagnostics = DiagnosticsStore()
+        self.diagnostics = diagnostics
+        surface = WebSurfaceController(diagnostics: diagnostics)
         super.init()
-        navigationGuard = NavigationGuard(webView: webView, diagnostics: diagnostics) { [weak self] in
+        surface.onPageFinished = { [weak self] in
             Task { await self?.refreshAuthState() }
         }
+        surface.isSignedOut = { [weak self] in self?.authState == .loggedOut }
         // Login completes inside Instagram's single-page app without a full page load, so watch cookies.
         webView.configuration.websiteDataStore.httpCookieStore.add(self)
     }
 
-    /// Called once at launch. Shows the login page only if there is no session.
+    /// Called once at launch. Loads the login page if there is no session, otherwise preloads the inbox
+    /// in the background so the Messages tab opens instantly. Waits for the content-rule firewall first.
     func start() async {
         guard !started else { return }
         started = true
+        await surface.prepare()
         await refreshAuthState()
         if authState == .loggedOut {
-            webView.load(URLRequest(url: InstagramRoutePolicy.loginURL))
+            surface.showLogin()
+        } else {
+            surface.show(.messages)
         }
-    }
-
-    func openWebChat() {
-        loadInbox()
-        webChatPresented = true
-    }
-
-    func loadInbox() {
-        webView.load(URLRequest(url: InstagramRoutePolicy.inboxURL))
-    }
-
-    /// Called when web chat closes. The single web view would otherwise keep a live instagram.com page
-    /// off-screen (audio playing, mic open, Instagram polling), so silence it and blank it. The login
-    /// sheet needs the login page, so a signed-out session loads that instead.
-    func parkWebView() {
-        if authState == .loggedOut {
-            webView.load(URLRequest(url: InstagramRoutePolicy.loginURL))
-            return
-        }
-        webView.pauseAllMediaPlayback(completionHandler: nil)
-        webView.setMicrophoneCaptureState(.none, completionHandler: nil)
-        webView.setCameraCaptureState(.none, completionHandler: nil)
-        webView.load(URLRequest(url: URL(string: "about:blank")!))
-    }
-
-    /// Returns to the last conversation (used to leave a DM-media page in web chat).
-    func backToConversation() {
-        navigationGuard?.returnToLastDirect()
     }
 
     /// Only checks that a session cookie exists (by name); the value is never stored, shown or logged.
@@ -105,7 +75,6 @@ final class InstagramSession: NSObject, ObservableObject, WKHTTPCookieStoreObser
             store.removeData(ofTypes: types, for: targets) { cont.resume() }
         }
         authState = .loggedOut
-        navigationGuard?.reset()
-        webView.load(URLRequest(url: InstagramRoutePolicy.loginURL))
+        surface.resetNavigationState()
     }
 }
