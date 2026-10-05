@@ -25,3 +25,10 @@ Injected-JS selectors that are likely to break if Instagram's markup changes:
 - Cache keyed by identifier not hash (simpler invalidation).
 - Unread toggle visible inside conversations (toggle currently inbox-only).
 - Flash-of-chrome at document-end (brief flicker of IG nav before JS hides it).
+
+## M2 final-review device-check priorities (the real go/no-go — CI can't verify these)
+1. Logged-out redirect must NOT loop: at login / after Reset, confirm you land on the login page and it stays (checklist 1/9). The native KVO redirect path isn't signed-out-guarded; it should terminate at /accounts/login/ but verify.
+2. Reel scroll-lock (checklist 4): a DM-opened reel must not scroll to the next; but a reel's comments / a post's caption MUST still scroll.
+3. Same-person post swiping (checklist 5): opening a post from a profile works, but swiping grid→next post currently bounces back to the profile (media→media is blocked unless same route). Spec wanted same-person swiping — decide if that gap matters; relaxing it safely would need a policy tweak.
+4. Injected-JS selectors (checklist 1,2,6,7,8): IG bottom nav `div[role=menubar]`, inbox unread marker, next-reel affordance, reel-pager scroll-snap, orientation fix on /create/story/. Any misbehaviour → report exactly what you saw; usually a one-line selector tweak.
+5. Content-rule path `/api/v1/web/launcher/sync` — confirm no app-config side effect; and `ig-firewall-v1` identifier must be bumped whenever ContentRules change (stale compiled cache otherwise).
