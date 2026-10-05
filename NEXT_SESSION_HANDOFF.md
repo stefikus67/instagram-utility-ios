@@ -2,7 +2,7 @@
 
 ## State (2026-10-05)
 - Milestone 1 (foundation) implemented per `docs/superpowers/plans/2026-10-05-m1-foundation.md`.
-- CI: green on branch m1-foundation (not merged to main yet); artifact `InstagramUtility-unsigned-ipa`.
+- CI: green on branch m1-foundation (not merged to main yet); run 37298454861, artifact `InstagramUtility-unsigned-ipa` (232 KB).
 - Device checklist (`docs/IPHONE_INSTALL.md` §4): not yet run by the owner.
 
 ## Next
