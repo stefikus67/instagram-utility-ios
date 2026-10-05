@@ -7,9 +7,9 @@
 
 ## Next
 1. Owner runs the milestone 1 checklist on the iPhone 13 and reports.
-2. Endpoint-discovery session: owner logs into instagram.com in the desktop app's browser pane and uses
-   DMs (inbox, a thread, sending text/photo/voice). Claude reads request names and response shapes only.
-3. Write the next plan: InstagramClient (+ rate limiter) → live inbox → native chat (milestone 2).
+2. DONE 2026-10-05: endpoint discovery. Results in `docs/notes/instagram-endpoints.md` (inbox, thread + paging, send text, send photo,
+   search, profile/grid/highlights/suggested, stories tray + viewer, post story). All plain HTTP; no WebSocket seen. Gaps listed at the bottom of that file.
+3. Write the next plan (Opus): InstagramClient (+ rate limiter, debounced search, token fetch for fb_dtsg/lsd) → live inbox → native chat → Find people (milestone 2).
 
 ## Must-fix items carried into the live-client plan (from milestone 1 reviews)
 - InboxLoader writes the cache after a cancelled fetch; with real data a cache file could survive Reset. Fix: Reset awaits the in-flight reload task, or the cache uses a generation token (Task.checkCancellation alone leaves a window).
