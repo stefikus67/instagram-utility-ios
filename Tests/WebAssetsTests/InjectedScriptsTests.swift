@@ -75,6 +75,13 @@ final class InjectedScriptsTests: XCTestCase {
         XCTAssertTrue(InjectedScripts.unreadToggleJS.contains("data-iu-unread-only"))
         XCTAssertTrue(InjectedScripts.hideChromeCSS.contains("data-iu-unread-only"))
     }
+    func testUnreadToggleUsesUnreadBlueSignalAndNeverHidesUnread() {
+        let js = InjectedScripts.unreadToggleJS
+        XCTAssertTrue(js.contains("74") && js.contains("93") && js.contains("249"), "must match unread-blue rgb(74,93,249)")
+        XCTAssertTrue(js.contains("getComputedStyle"))
+        XCTAssertTrue(js.contains("data-iu-read"))
+        XCTAssertTrue(js.contains("unreadRows.length === 0"), "must do nothing when no unread row is identified")
+    }
     func testChromeCSSIsHideOnly() {
         let css = InjectedScripts.hideChromeCSS
         XCTAssertTrue(css.contains("display:none !important"))
