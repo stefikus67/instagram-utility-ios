@@ -57,11 +57,56 @@ final class InstagramRoutePolicyTests: XCTestCase {
         XCTAssertEqual(c("https://www.instagram.com/accounts/"), .blocked)
     }
 
+    // M2: profiles
+    func testProfileAllowed() {
+        XCTAssertEqual(c("https://www.instagram.com/someone/"), .profileAllowed)
+        XCTAssertEqual(c("https://www.instagram.com/someone/reels/"), .profileAllowed)   // their own reels grid
+        XCTAssertEqual(c("https://www.instagram.com/someone/tagged/"), .profileAllowed)
+    }
+    func testFeedAndDiscoveryStillBlocked() {
+        XCTAssertEqual(c("https://www.instagram.com/"), .blocked)
+        XCTAssertEqual(c("https://www.instagram.com/explore/"), .blocked)
+        XCTAssertEqual(c("https://www.instagram.com/reels/"), .blocked)            // global reels feed
+        XCTAssertEqual(c("https://www.instagram.com/explore/search/keyword/?q=x"), .blocked)
+    }
+    // M2: stories
+    func testStoriesAllowed() {
+        XCTAssertEqual(c("https://www.instagram.com/stories/someone/"), .storiesAllowed)
+        XCTAssertEqual(c("https://www.instagram.com/stories/someone/123/"), .storiesAllowed)
+    }
+    // M2: story creation / posting
+    func testCreateAllowed() {
+        XCTAssertEqual(c("https://www.instagram.com/create/story/"), .createAllowed)
+        XCTAssertEqual(c("https://www.instagram.com/create/details/"), .createAllowed)
+    }
+    // M2: media reachable from profile and stories, not just DMs
+    func testMediaFromProfile() {
+        XCTAssertEqual(c("https://www.instagram.com/p/AAA/", from: "https://www.instagram.com/someone/"), .mediaAllowed)
+        XCTAssertEqual(c("https://www.instagram.com/reel/AAA/", from: "https://www.instagram.com/someone/"), .mediaAllowed)
+    }
+    func testMediaFromStories() {
+        XCTAssertEqual(c("https://www.instagram.com/p/AAA/", from: "https://www.instagram.com/stories/someone/1/"), .mediaAllowed)
+    }
+    func testMediaFromDirectStillAllowed() {
+        XCTAssertEqual(c("https://www.instagram.com/reel/AAA/", from: dm), .mediaAllowed)
+    }
+    func testMediaFromNowhereBlocked() {
+        XCTAssertEqual(c("https://www.instagram.com/reel/AAA/"), .blocked)
+        XCTAssertEqual(c("https://www.instagram.com/reel/AAA/", from: "https://www.instagram.com/accounts/login/"), .blocked)
+    }
+    func testMediaChainStillBlocked() {
+        XCTAssertEqual(c("https://www.instagram.com/reel/BBB/", from: "https://www.instagram.com/reel/AAA/"), .blocked)
+    }
+    func testProfileIsAValidMediaSourceButDiscoveryIsNot() {
+        // "/reels/" (feed) is never a valid source
+        XCTAssertEqual(c("https://www.instagram.com/p/AAA/", from: "https://www.instagram.com/reels/"), .blocked)
+    }
+
     // DM media
     func testMediaFromDirectAllowedOnce() {
-        XCTAssertEqual(c("https://www.instagram.com/reel/ABC123/", from: dm), .dmMediaAllowedOnce)
-        XCTAssertEqual(c("https://www.instagram.com/p/ABC123/", from: dm), .dmMediaAllowedOnce)
-        XCTAssertEqual(c("https://www.instagram.com/someuser/reel/ABC123/", from: dm), .dmMediaAllowedOnce)
+        XCTAssertEqual(c("https://www.instagram.com/reel/ABC123/", from: dm), .mediaAllowed)
+        XCTAssertEqual(c("https://www.instagram.com/p/ABC123/", from: dm), .mediaAllowed)
+        XCTAssertEqual(c("https://www.instagram.com/someuser/reel/ABC123/", from: dm), .mediaAllowed)
     }
 
     func testMediaWithoutDirectSourceBlocked() {
@@ -77,7 +122,7 @@ final class InstagramRoutePolicyTests: XCTestCase {
 
     func testSameMediaQueryChangeAllowed() {
         let first = "https://www.instagram.com/p/AAA/"
-        XCTAssertEqual(c("https://www.instagram.com/p/AAA/?img_index=2", from: first), .dmMediaAllowedOnce)
+        XCTAssertEqual(c("https://www.instagram.com/p/AAA/?img_index=2", from: first), .mediaAllowed)
     }
 
     func testMediaBackToDirectAllowed() {
@@ -86,8 +131,6 @@ final class InstagramRoutePolicyTests: XCTestCase {
 
     // Unknown routes
     func testUnknownInstagramRoutesBlocked() {
-        XCTAssertEqual(c("https://www.instagram.com/someuser/"), .blocked)
-        XCTAssertEqual(c("https://www.instagram.com/stories/someuser/123/", from: dm), .blocked)
         XCTAssertEqual(c("https://www.instagram.com/notifications/"), .blocked)
         XCTAssertEqual(c("https://www.instagram.com/foo/bar/baz/qux/"), .blocked)
     }
@@ -124,7 +167,10 @@ final class InstagramRoutePolicyTests: XCTestCase {
     func testAllowedFlag() {
         XCTAssertTrue(RouteCategory.directAllowed.isAllowedInApp)
         XCTAssertTrue(RouteCategory.authAllowed.isAllowedInApp)
-        XCTAssertTrue(RouteCategory.dmMediaAllowedOnce.isAllowedInApp)
+        XCTAssertTrue(RouteCategory.profileAllowed.isAllowedInApp)
+        XCTAssertTrue(RouteCategory.storiesAllowed.isAllowedInApp)
+        XCTAssertTrue(RouteCategory.createAllowed.isAllowedInApp)
+        XCTAssertTrue(RouteCategory.mediaAllowed.isAllowedInApp)
         XCTAssertFalse(RouteCategory.blocked.isAllowedInApp)
         XCTAssertFalse(RouteCategory.external.isAllowedInApp)
     }

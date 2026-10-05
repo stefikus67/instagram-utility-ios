@@ -4,14 +4,17 @@ import Foundation
 enum RouteCategory: String, Equatable, CaseIterable {
     case authAllowed = "AUTH_ALLOWED"
     case directAllowed = "DIRECT_ALLOWED"
-    case dmMediaAllowedOnce = "DM_MEDIA_ALLOWED_ONCE"
+    case profileAllowed = "PROFILE_ALLOWED"
+    case storiesAllowed = "STORIES_ALLOWED"
+    case createAllowed = "CREATE_ALLOWED"
+    case mediaAllowed = "MEDIA_ALLOWED"
     case blocked = "BLOCKED"
     case external = "EXTERNAL"
 
     /// True when the URL may be shown inside the in-app web view.
     var isAllowedInApp: Bool {
         switch self {
-        case .authAllowed, .directAllowed, .dmMediaAllowedOnce: return true
+        case .authAllowed, .directAllowed, .profileAllowed, .storiesAllowed, .createAllowed, .mediaAllowed: return true
         case .blocked, .external: return false
         }
     }
@@ -51,13 +54,17 @@ enum InstagramRoutePolicy {
 
         if first == "direct" { return .directAllowed }
         if isAuthPath(segs) { return .authAllowed }
+        if first == "create" { return .createAllowed }
+        if first == "stories" { return .storiesAllowed }
         if isMediaPath(segs) {
             guard let source = source else { return .blocked }
-            if classify(source) == .directAllowed { return .dmMediaAllowedOnce }
-            // Query/fragment-only change on the media page already opened from a DM (e.g. carousel index).
-            if isMediaPath(segments(of: source)), sameRoute(source, url) { return .dmMediaAllowedOnce }
+            let src = classify(source)
+            let validSource: Set<RouteCategory> = [.directAllowed, .profileAllowed, .storiesAllowed]
+            if validSource.contains(src) { return .mediaAllowed }
+            if isMediaPath(segments(of: source)), sameRoute(source, url) { return .mediaAllowed }
             return .blocked
         }
+        if isProfilePath(segs) { return .profileAllowed }
         return .blocked
     }
 
@@ -78,6 +85,21 @@ enum InstagramRoutePolicy {
 
     // MARK: - Path helpers
 
+    private static let reservedFirstSegments: Set<String> = [
+        "explore", "reels", "direct", "accounts", "stories", "p", "reel", "tv",
+        "create", "challenge", "auth_platform", "consent", "privacy",
+        "notifications", "emails", "settings", "api", "graphql", "ajax",
+    ]
+    private static let profileSubpages: Set<String> = ["reels", "tagged", "saved", "feed"]
+
+    /// A user profile: "/<username>/" or "/<username>/<reels|tagged|...>/". Never a reserved word.
+    private static func isProfilePath(_ segs: [String]) -> Bool {
+        guard let first = segs.first, !reservedFirstSegments.contains(first) else { return false }
+        if segs.count == 1 { return true }
+        if segs.count == 2 { return profileSubpages.contains(segs[1]) }
+        return false
+    }
+
     private static func isAuthPath(_ segs: [String]) -> Bool {
         guard let first = segs.first else { return false }
         if first == "accounts" { return segs.count > 1 && accountsAllowed.contains(segs[1]) }
@@ -88,8 +110,7 @@ enum InstagramRoutePolicy {
     private static func isMediaPath(_ segs: [String]) -> Bool {
         if segs.count == 2 { return mediaTopLevel.contains(segs[0]) }
         if segs.count == 3 {
-            let reserved: Set<String> = ["explore", "reels", "direct", "accounts", "stories", "p", "reel", "tv"]
-            return !reserved.contains(segs[0]) && mediaUnderUser.contains(segs[1])
+            return !reservedFirstSegments.contains(segs[0]) && mediaUnderUser.contains(segs[1])
         }
         return false
     }

@@ -18,7 +18,7 @@ struct WebChatView: View {
                         Button("Done") { dismiss() }
                     }
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        if diagnostics.currentCategory == .dmMediaAllowedOnce {
+                        if diagnostics.currentCategory == .mediaAllowed {
                             Button("Back to chat") { session.backToConversation() }
                         } else {
                             Button("Inbox") { session.loadInbox() }
