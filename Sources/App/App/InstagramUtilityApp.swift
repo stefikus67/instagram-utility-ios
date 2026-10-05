@@ -9,6 +9,7 @@ struct InstagramUtilityApp: App {
             RootView()
                 .environmentObject(session)
                 .environmentObject(session.diagnostics)
+                .environmentObject(session.surface)
         }
     }
 }

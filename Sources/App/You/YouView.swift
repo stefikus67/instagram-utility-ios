@@ -3,6 +3,7 @@ import SwiftUI
 struct YouView: View {
     @EnvironmentObject private var session: InstagramSession
     @EnvironmentObject private var diagnostics: DiagnosticsStore
+    @EnvironmentObject private var surface: WebSurfaceController
     @State private var confirmReset = false
 
     private var version: String {
@@ -17,15 +18,10 @@ struct YouView: View {
                 Text("You").font(Theme.largeTitle).foregroundStyle(Theme.text)
                     .padding(.top, Spacing.s)
 
-                SettingsSection(title: "Web chat") {
-                    Button("Open web chat") { session.openWebChat() }
-                        .font(Theme.body)
-                        .foregroundStyle(Theme.gold)
-                }
-
                 SettingsSection(title: "Diagnostics") {
                     ValueRow(title: "Version", value: version)
                     ValueRow(title: "Session", value: session.authState.rawValue)
+                    ValueRow(title: "Content rules", value: surface.contentRulesActive ? "Active" : "Off")
                     ValueRow(title: "Web host", value: diagnostics.currentHost)
                     ValueRow(title: "Route", value: diagnostics.currentCategory?.rawValue ?? "-")
                     ValueRow(title: "Blocked navigations", value: String(diagnostics.blockedCount))

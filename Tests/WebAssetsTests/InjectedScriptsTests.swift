@@ -111,13 +111,24 @@ final class InjectedScriptsTests: XCTestCase {
         var MutationObserver = function(){ this.observe = function(){}; this.disconnect = function(){}; };
         """)
         XCTAssertNil(thrown, "stub setup failed: \(thrown ?? "")")
-        for js in InjectedScripts.documentStart() + InjectedScripts.documentEnd() {
+        for js in InjectedScripts.documentStart() + InjectedScripts.documentEnd() + [InjectedScripts.styleInjectionJS()] {
             thrown = nil
             ctx.evaluateScript(js)
             XCTAssertNil(thrown, "JS threw or failed to parse: \(thrown ?? "")")
         }
     }
 #endif
+
+    func testStyleInjectionWrapsCSSAsJSONLiteral() {
+        let js = InjectedScripts.styleInjectionJS()
+        XCTAssertTrue(js.hasPrefix("(function(){try{"))
+        XCTAssertTrue(js.hasSuffix("})();"))
+        XCTAssertTrue(js.contains("iu-hide-chrome"))
+        XCTAssertTrue(js.contains("div[role=\\\"menubar\\\"]"), "CSS quotes must be JSON-escaped")
+        XCTAssertFalse(js.contains("fetch(") || js.contains("XMLHttpRequest"))
+        // A raw newline in the CSS must not reach the JS string literal.
+        XCTAssertFalse(InjectedScripts.styleInjectionJS(css: "a\nb").contains("a\nb"))
+    }
 
     func testStartAndEndGroupings() {
         XCTAssertEqual(InjectedScripts.documentStart(), [InjectedScripts.orientationFixJS, InjectedScripts.routeGuardJS])

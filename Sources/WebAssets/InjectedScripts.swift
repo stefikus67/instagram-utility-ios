@@ -364,6 +364,16 @@ html[data-iu-unread-only] [data-iu-read="1"] { display:none !important; }
 
     // MARK: - Grouping
 
+    /// Wraps a CSS string (normally `hideChromeCSS`) in a try/catch IIFE that appends it once as a
+    /// <style id="iu-hide-chrome"> element. The CSS goes in as a JSON string literal, so it needs no escaping.
+    /// Not part of `documentEnd()` (that holds only the scripts); the app injects this at document end too.
+    public static func styleInjectionJS(css: String = hideChromeCSS) -> String {
+        let literal = (try? JSONEncoder().encode(css)).flatMap { String(data: $0, encoding: .utf8) } ?? "\"\""
+        return "(function(){try{if(document.getElementById('iu-hide-chrome')){return;}"
+            + "var s=document.createElement('style');s.id='iu-hide-chrome';s.textContent=\(literal);"
+            + "(document.head||document.documentElement).appendChild(s);}catch(e){}})();"
+    }
+
     /// Scripts to inject at document start (before page scripts run).
     public static func documentStart() -> [String] {
         [orientationFixJS, routeGuardJS]

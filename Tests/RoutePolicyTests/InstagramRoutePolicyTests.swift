@@ -164,6 +164,23 @@ final class InstagramRoutePolicyTests: XCTestCase {
         XCTAssertEqual(InstagramRoutePolicy.blockedSurface(for: u("https://www.instagram.com/someone/")), .profileOrOther)
     }
 
+    func testProfileURLBuildsAllowedProfiles() {
+        XCTAssertEqual(InstagramRoutePolicy.profileURL(username: "Some.One_9")?.absoluteString, "https://www.instagram.com/some.one_9/")
+        XCTAssertEqual(InstagramRoutePolicy.profileURL(username: "  @alice ")?.absoluteString, "https://www.instagram.com/alice/")
+        XCTAssertEqual(InstagramRoutePolicy.classify(InstagramRoutePolicy.profileURL(username: "alice")!), .profileAllowed)
+    }
+
+    func testProfileURLRejectsBadOrReservedNames() {
+        for bad in ["", "   ", "@", "a b", "a/b", "../explore", "name?x=1", "ünï", String(repeating: "a", count: 31),
+                    "explore", "direct", "reels", "accounts", "p", "create", "stories"] {
+            XCTAssertNil(InstagramRoutePolicy.profileURL(username: bad), "should reject \(bad)")
+        }
+    }
+
+    func testCreateStoryURLIsAllowed() {
+        XCTAssertEqual(InstagramRoutePolicy.classify(InstagramRoutePolicy.createStoryURL), .createAllowed)
+    }
+
     func testAllowedFlag() {
         XCTAssertTrue(RouteCategory.directAllowed.isAllowedInApp)
         XCTAssertTrue(RouteCategory.authAllowed.isAllowedInApp)

@@ -23,9 +23,9 @@ profile the user deliberately opened or something someone sent them.
 |---|---|
 | Colours, spacing, type, radii, sizes (+ tests) | `Sources/DesignTokens/`, `Tests/DesignTokensTests/` |
 | Injected web content rules and scripts (+ tests) | `Sources/WebAssets/`, `Tests/WebAssetsTests/` |
-| Web-chat route firewall | `Sources/RoutePolicy/`, `Tests/RoutePolicyTests/` |
+| Route firewall (web surface) | `Sources/RoutePolicy/`, `Tests/RoutePolicyTests/` |
 | SwiftUI components | `Sources/App/DesignSystem/` |
-| Screens | `Sources/App/<Feature>/` (FindPeople, You, WebChat, Session) |
+| Screens | `Sources/App/<Feature>/` (FindPeople, Messages, You, Web, Session) |
 | Login / session web view | `Sources/App/Session/InstagramSession.swift` |
 | App shell and tabs | `Sources/App/App/RootView.swift`, `DesignSystem/PillTabBar.swift` |
 

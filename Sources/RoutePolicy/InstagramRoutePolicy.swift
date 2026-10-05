@@ -33,6 +33,21 @@ enum InstagramRoutePolicy {
     static let inboxURL = URL(string: "https://www.instagram.com/direct/inbox/")!
     static let loginURL = URL(string: "https://www.instagram.com/accounts/login/?next=%2Fdirect%2Finbox%2F")!
 
+    static let createStoryURL = URL(string: "https://www.instagram.com/create/story/")!
+
+    /// The profile page for an exact username, or nil when the text is not a plausible username or the
+    /// resulting route would not be a profile the policy allows (e.g. "explore", "direct").
+    static func profileURL(username: String) -> URL? {
+        var name = username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if name.hasPrefix("@") { name.removeFirst() }
+        guard (1...30).contains(name.count),
+              name.unicodeScalars.allSatisfy({ ("a"..."z").contains($0) || ("0"..."9").contains($0) || $0 == "." || $0 == "_" })
+        else { return nil }
+        guard let url = URL(string: "https://www.instagram.com/\(name)/"),
+              classify(url) == .profileAllowed else { return nil }
+        return url
+    }
+
     private static let instagramHosts: Set<String> = ["instagram.com", "www.instagram.com", "m.instagram.com"]
     /// Account Center / accounts hosts are only used by auth and security flows.
     private static let authHosts: Set<String> = ["accounts.instagram.com", "accountscenter.instagram.com"]
