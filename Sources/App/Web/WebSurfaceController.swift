@@ -193,7 +193,7 @@ private final class ScriptBridge: NSObject, WKScriptMessageHandler {
     weak var target: WebSurfaceController?
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard let path = message.body as? String else { return }
+        guard message.frameInfo.isMainFrame, let path = message.body as? String else { return }
         target?.handleBlocked(path: path)
     }
 }

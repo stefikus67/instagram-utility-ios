@@ -51,7 +51,7 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
     func handleBlockedPath(_ path: String) {
         guard path.hasPrefix("/"), let url = URL(string: "https://www.instagram.com" + path),
               InstagramRoutePolicy.classify(url, from: lastAllowedURL) == .blocked else { return }
-        if redirectToSafePage() { diagnostics.recordBlocked(url) }
+        redirectToSafePage(counting: url)
     }
 
     // MARK: - SPA route changes (pushState) and committed URLs
@@ -62,9 +62,9 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
         if category.isAllowedInApp {
             record(url, category)
         } else if category == .blocked {
-            diagnostics.recordBlocked(url)
-            webView?.stopLoading()
-            redirectToSafePage()
+            // Count and stop loading only if a redirect is actually issued; a repeat event for a redirect
+            // already in flight must leave that redirect alone.
+            redirectToSafePage(counting: url)
         }
         // .external cannot be committed in the main frame (cancelled in decidePolicyFor).
     }
@@ -77,11 +77,13 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
     }
 
     /// Sends the web view to the last allowed non-media page (the inbox if there is none).
-    /// Returns false when an identical redirect is already loading and nothing was done.
-    @discardableResult
-    private func redirectToSafePage() -> Bool {
+    /// Does nothing (no stopLoading, no count) when an identical redirect is already loading, so a burst
+    /// of blocked events cannot cancel the redirect that is already on its way. `blocked` is the URL that
+    /// triggered it, counted in diagnostics once, only when a redirect is actually issued.
+    private func redirectToSafePage(counting blocked: URL? = nil) {
         let target = lastSafeURL ?? InstagramRoutePolicy.inboxURL
-        guard redirectInFlight != target else { return false }
+        guard redirectInFlight != target else { return }
+        if let blocked { diagnostics.recordBlocked(blocked) }
         redirectInFlight = target
         redirectTimeout?.cancel()
         // Safety net if the load never finishes (cancelled, offline): allow a later redirect again.
@@ -90,8 +92,8 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
             guard !Task.isCancelled else { return }
             self?.clearRedirectInFlight()
         }
+        webView?.stopLoading()
         webView?.load(URLRequest(url: target))
-        return true
     }
 
     private func clearRedirectInFlight() {
