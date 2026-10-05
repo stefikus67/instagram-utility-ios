@@ -57,6 +57,20 @@ final class InstagramSession: NSObject, ObservableObject, WKHTTPCookieStoreObser
         webView.load(URLRequest(url: InstagramRoutePolicy.inboxURL))
     }
 
+    /// Called when web chat closes. The single web view would otherwise keep a live instagram.com page
+    /// off-screen (audio playing, mic open, Instagram polling), so silence it and blank it. The login
+    /// sheet needs the login page, so a signed-out session loads that instead.
+    func parkWebView() {
+        if authState == .loggedOut {
+            webView.load(URLRequest(url: InstagramRoutePolicy.loginURL))
+            return
+        }
+        webView.pauseAllMediaPlayback(completionHandler: nil)
+        webView.setMicrophoneCaptureState(.none, completionHandler: nil)
+        webView.setCameraCaptureState(.none, completionHandler: nil)
+        webView.load(URLRequest(url: URL(string: "about:blank")!))
+    }
+
     /// Returns to the last conversation (used to leave a DM-media page in web chat).
     func backToConversation() {
         navigationGuard?.returnToLastDirect()
@@ -68,8 +82,7 @@ final class InstagramSession: NSObject, ObservableObject, WKHTTPCookieStoreObser
             webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cont.resume(returning: $0) }
         }
         let has = cookies.contains {
-            let d = $0.domain.hasPrefix(".") ? String($0.domain.dropFirst()) : $0.domain
-            return (d == "instagram.com" || d.hasSuffix(".instagram.com")) && $0.name == "sessionid" && !$0.value.isEmpty
+            InstagramHost.isInstagram($0.domain) && $0.name == "sessionid" && !$0.value.isEmpty
         }
         let newState: AuthenticationState = has ? .authenticated : .loggedOut
         if newState != authState { authState = newState }

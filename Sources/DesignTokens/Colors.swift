@@ -69,5 +69,6 @@ public enum Palette {
         ("gold on bg", gold, bg),
         ("incoming bubble text", text, raise),
         ("own bubble text", goldInk, gold),
+        ("gold on card", gold, card),
     ]
 }

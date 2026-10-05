@@ -33,7 +33,7 @@ struct RootView: View {
         .sheet(isPresented: loginRequired) {
             LoginView().interactiveDismissDisabled()
         }
-        .fullScreenCover(isPresented: $session.webChatPresented) {
+        .fullScreenCover(isPresented: $session.webChatPresented, onDismiss: { session.parkWebView() }) {
             WebChatView()
         }
         .task { await session.start() }

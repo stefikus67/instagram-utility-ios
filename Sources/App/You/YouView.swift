@@ -44,7 +44,7 @@ struct YouView: View {
                 SettingsSection(title: "Account") {
                     Button("Reset Instagram Session", role: .destructive) { confirmReset = true }
                         .font(Theme.body)
-                    Text("Signs you out and deletes everything this app stored.")
+                    Text("Signs you out and deletes your Instagram session and cached chats.")
                         .font(Theme.label)
                         .foregroundStyle(Theme.text3)
                 }

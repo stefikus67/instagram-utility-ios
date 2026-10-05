@@ -35,7 +35,8 @@ SideStore → My Apps → **+** → pick the IPA → it signs with your free App
 7. Tap a chat → web chat opens full screen. Open a conversation, tap the message field:
    **the field and Send sit above the keyboard.** Close the keyboard: **Send is visible** (no tab bar).
 8. In web chat, record a voice message (iOS asks for the microphone the first time).
-9. Done → back in the app. You → Reset Instagram Session → confirm → the login sheet appears.
-10. Only if it happens: if Instagram logs you out while web chat is open (web chat shows Instagram's login page), tap **Done**. The login sheet must appear. If it doesn't, tell Claude. Skip this step if it never happens.
+9. Open a reel someone sent you with sound on, tap **Done** — the sound must stop.
+10. Done → back in the app. You → Reset Instagram Session → confirm → the login sheet appears.
+11. Only if it happens: if Instagram logs you out while web chat is open (web chat shows Instagram's login page), tap **Done**. The login sheet must appear. If it doesn't, tell Claude. Skip this step if it never happens.
 Known and expected: in web chat you can still swipe from a shared reel to other reels. That is fixed
 by the native viewer in milestone 3; web chat is only the fallback.

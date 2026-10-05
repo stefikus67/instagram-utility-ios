@@ -41,4 +41,10 @@ final class InboxRulesTests: XCTestCase {
         let threads = [makeThread("1", title: "Ana", preview: "see you saturday"), makeThread("2", title: "Tim")]
         XCTAssertEqual(InboxSearch.filter(threads, query: "Saturday").map(\.id), ["1"])
     }
+
+    func testSearchIsDiacriticInsensitive() {
+        let threads = [makeThread("1", title: "Žiga"), makeThread("2", title: "Maja")]
+        XCTAssertEqual(InboxSearch.filter(threads, query: "ziga").map(\.id), ["1"])
+        XCTAssertEqual(InboxSearch.filter(threads, query: "ŽIGA").map(\.id), ["1"])
+    }
 }

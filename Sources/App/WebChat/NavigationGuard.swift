@@ -107,7 +107,7 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
                  type: WKMediaCaptureType,
                  decisionHandler: @escaping (WKPermissionDecision) -> Void) {
         let host = origin.host
-        let isInstagram = origin.protocol == "https" && (host == "instagram.com" || host.hasSuffix(".instagram.com"))
+        let isInstagram = origin.protocol == "https" && InstagramHost.isInstagram(host)
         decisionHandler(isInstagram ? .prompt : .deny)
     }
 
