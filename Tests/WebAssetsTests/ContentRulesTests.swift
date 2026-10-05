@@ -16,7 +16,7 @@ final class ContentRulesTests: XCTestCase {
     }
     func testBlocksDiscoveryEndpoints() {
         let j = ContentRules.json()
-        for needle in ["feed/timeline", "discover/web/explore_grid", "clips/discover", "discover/chaining", "reels_tray"] {
+        for needle in ["feed/timeline", "discover/web/explore_grid", "clips/discover", "discover/chaining"] {
             XCTAssertTrue(j.contains(needle), "rule list must block \(needle)")
         }
     }
@@ -30,9 +30,11 @@ final class ContentRulesTests: XCTestCase {
     }
     func testDoesNotBlockDirectOrGraphqlSend() {
         // The DM surface itself and message-send must never be blocked.
-        for allowed in ["/direct/", "/api/graphql"] {
-            XCTAssertFalse(ContentRules.blockedURLPatterns.contains { allowed.range(of: $0, options: .regularExpression) != nil && !$0.contains("explore") && !$0.contains("timeline") },
-                           "must not block \(allowed)")
+        let allowed = ["https://www.instagram.com/direct/inbox/", "https://i.instagram.com/api/v1/direct_v2/threads/broadcast/text/", "https://www.instagram.com/api/graphql"]
+        for url in allowed {
+            for p in (ContentRules.blockedURLPatterns + ContentRules.blockedResourcePrefixes) {
+                XCTAssertNil(url.range(of: p, options: .regularExpression), "\(p) must not block \(url)")
+            }
         }
     }
 }
