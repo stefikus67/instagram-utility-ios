@@ -83,14 +83,18 @@ hidden inside a chat.
 | border | `#2f2822` | input field outline, chat header divider | decorative |
 
 **Proportion system** ("the ratios" — every size comes from these; enforced by tests, §7):
-- Spacing steps: 4 · 8 · 12 · 16 · 24 · 32 pt only. Screen edge margin 16 pt.
+- Spacing steps: 2 · 4 · 8 · 12 · 16 · 24 · 32 pt only (2 is only for the gap between bubbles in a
+  run). Screen edge margin 16 pt. Spacing = gaps, padding, margins. Component sizes (avatars, heights)
+  and strokes are not spacing and are governed by the ratio rules below.
 - Type scale: large title 34 (serif, New York) · body/name 17 (names semibold) · preview 15 · time 13 ·
   label 12 · tab label 10. Matches iOS Dynamic Type steps.
-- Chat card: 72 pt tall, 52 pt avatar, 8 pt between cards, 20 pt radius.
-- Story circles: 68 pt (1.3× chat avatar), 3 pt ring, 3 pt gap, 16 pt between circles.
+- Chat card: 72 pt tall, 52 pt avatar centred vertically (inset (72 − 52) / 2 = 10 pt, also used as
+  the left padding), 8 pt between cards, 20 pt radius.
+- Story circles: 68 pt (1.3× chat avatar), 3 pt ring, 3 pt gap, 56 pt avatar inside, 16 pt between
+  circles, 4 pt to the name label.
 - Radii: card 20 · search 12 · bubbles 20 · input field 20 · tab bar 32 (fully round). Nested radius =
   outer radius − padding.
-- Tab bar: 64 pt tall, 24 pt from sides, 28 pt above the bottom edge, 24 pt icons.
+- Tab bar: 64 pt tall, 24 pt from sides, 24 pt above the bottom edge, 24 pt icons.
 - Chat: bubbles max 75% of width, 8/12 pt padding, 2 pt between messages in a run, 8 pt between runs.
   Input controls 40 pt. Camera button left (gold), gallery + mic inside the field, mic becomes the gold
   Send button while text is present. Input bar is pinned to the keyboard and moves with it.
