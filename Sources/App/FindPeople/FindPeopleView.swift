@@ -1,54 +1,27 @@
 import SwiftUI
 
-/// Find and open Instagram profiles by username.
+/// Find people: Instagram's own account-search page in the shared web surface. The user types in Instagram's
+/// search box and gets its live suggestions; tapping a result opens the profile (allowed by the route policy).
+/// (`InstagramRoutePolicy.profileURL` is no longer used by the UI; it stays, tested, for callers that need it.)
 struct FindPeopleView: View {
     @EnvironmentObject private var session: InstagramSession
     @EnvironmentObject private var surface: WebSurfaceController
-
-    @State private var text = ""
-    @State private var showError = false
-    @FocusState private var focused: Bool
 
     var body: some View {
         if session.authState == .loggedOut {
             Theme.bg
         } else {
-            VStack(spacing: Spacing.m) {
+            VStack(spacing: 0) {
                 Text("Find people").font(Theme.largeTitle).foregroundStyle(Theme.text)
                     .padding(.horizontal, Spacing.screenEdge)
-                    .padding(.top, Spacing.s)
+                    .padding(.vertical, Spacing.s)
                     .frame(maxWidth: .infinity, alignment: .leading)
-
-                SearchField(text: $text, placeholder: "Username")
-                    .padding(.horizontal, Spacing.screenEdge)
-                    .focused($focused)
-                    .onSubmit(handleSubmit)
-
-                if showError {
-                    Text("Enter a valid Instagram username")
-                        .font(Theme.preview)
-                        .foregroundStyle(Theme.text3)
-                        .padding(.horizontal, Spacing.screenEdge)
-                }
-
                 WebSurface()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .onAppear { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focused = true } }
-        }
-    }
-
-    private func handleSubmit() {
-        let url = InstagramRoutePolicy.profileURL(username: text)
-        if let url = url {
-            // Determine cleaned username for display.
-            var cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            if cleaned.hasPrefix("@") { cleaned.removeFirst() }
-            surface.show(.profile(username: cleaned))
-            showError = false
-        } else {
-            showError = true
+            // Reload: tapping a result navigates the shared web view to a profile while the surface stays .search,
+            // so a plain show(.search) would be skipped as already-current and return to that profile.
+            .onAppear { surface.show(.search, reload: true) }
         }
     }
 }
-

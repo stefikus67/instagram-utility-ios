@@ -1,23 +1,27 @@
-# Handoff — Instagram Utility
+# Handoff — Killagram (Instagram Utility)
 
-## State (2026-10-06 — M2 shipped)
-**Milestone 2 (website product)** shipped per `docs/superpowers/plans/2026-10-06-m2-website-product.md`.
-- Architecture: Instagram's mobile website in WKWebView, made focused by: expanded route firewall (profiles/stories/create allowed; feed/explore/reels blocked), content rule list blocking feed/explore/reels/ads at network layer, injected CSS/JS (hide IG nav, lock reel scroll in DMs, screen.orientation override, unread-only inbox toggle).
-- Three native tabs: Messages (web inbox), Find people (native username field), You (Post story, Diagnostics, Reset).
-- Dead M1 native-inbox code removed. Web-chat concept removed (Messages IS the web inbox now).
-- **Device checklist** (`docs/IPHONE_INSTALL.md` §4): the acceptance gate — 9 steps, 6 of which involve injected JS (steps 1, 2, 4, 6, 7, 8). Owner to run and report.
-- **CI acceptance:** run 37352237383, artifact `InstagramUtility-unsigned-ipa` (184,540 bytes / ~0.18 MB). Unit tests passed; build successful.
+## State (2026-10-06 — M3 shipped)
+**Milestone 3 (Killagram)** shipped with the following enhancements:
+- **Renamed to Killagram** with new gold-camera icon.
+- **Find people search:** now uses Instagram's own /explore/search/ page for real account suggestions as you type; /explore/search/ is the only allowed Explore sub-route.
+- **Story posting:** switches to desktop user agent (Version/17.0 string) ONLY while /create/story/ is open, reverts to mobile everywhere else — works around Instagram's mobile web block.
+- **Unread-only toggle:** detects Instagram's unread-blue dot (rgb 74,93,249); hides read chats; safe-degrades to showing all rows if the marker changes.
+- **Confirmed web limits (permanent, not fixable in web wrapper):** view-once ("tap to view") DM photos/videos are app-only on every Instagram web surface; live in-app camera capture in DMs is app-only (camera-roll send still works).
+- Architecture: Instagram's mobile website in WKWebView, made focused by: expanded route firewall (profiles/stories/create/explore-search allowed; feed/explore/reels blocked), content rule list blocking feed/explore/reels/ads at network layer, injected CSS/JS (hide IG nav, lock reel scroll in DMs, screen.orientation override, unread-only inbox toggle).
+- Three native tabs: Messages (web inbox), Find people (Instagram search), You (Post story, Diagnostics, Reset).
+- **Device checklist** (`docs/IPHONE_INSTALL.md` §4): the acceptance gate — 8 steps. Owner to run and report.
+- **CI acceptance:** run 37374515675, artifact `InstagramUtility-unsigned-ipa` (242,953 bytes / ~0.24 MB). Unit tests passed; build successful.
 
 ## Known-fragile items to re-verify after Instagram site changes
 Injected-JS selectors that are likely to break if Instagram's markup changes:
 - IG bottom nav: `div[role=menubar]` (hide injection)
-- Inbox unread marker: selector TBD pending implementation
-- Next-reel affordance: selector TBD pending implementation  
-- Reel-pager scroll-snap: selector TBD pending implementation
-- Logged-out "/" redirect: verify no infinite loop if "/" redirects when logged out
-- Story-cover composer overlap/file-picker: verify no overlap and file input works
+- Inbox unread marker: detects rgb(74,93,249) blue dot — may change if Instagram's UI color changes
+- Reel-scroll lock in DMs: scroll-snap or scroll-behavior CSS rules — may change if Instagram's layout changes
+- Story composer page: `/create/story/` URL — depends on Instagram's routing staying stable
+- Desktop UA Version string: currently Version/17.0 — may need update if Instagram changes detection
+- currentSurface quirk: returning to Find people may show the last viewed profile instead of search — depends on Instagram's page state management
 
-**Content-rule GraphQL identifier:** must be bumped whenever rules change (current: TBD pending CI run).
+**Content-rule GraphQL identifier:** must be bumped whenever rules change.
 
 ## Deferred minors from per-task reviews (revisit if time permits)
 - Profile deny-list (block repeated navigation to same profile).
@@ -26,9 +30,10 @@ Injected-JS selectors that are likely to break if Instagram's markup changes:
 - Unread toggle visible inside conversations (toggle currently inbox-only).
 - Flash-of-chrome at document-end (brief flicker of IG nav before JS hides it).
 
-## M2 final-review device-check priorities (the real go/no-go — CI can't verify these)
-1. Logged-out redirect must NOT loop: at login / after Reset, confirm you land on the login page and it stays (checklist 1/9). The native KVO redirect path isn't signed-out-guarded; it should terminate at /accounts/login/ but verify.
-2. Reel scroll-lock (checklist 4): a DM-opened reel must not scroll to the next; but a reel's comments / a post's caption MUST still scroll.
-3. Same-person post swiping (checklist 5): opening a post from a profile works, but swiping grid→next post currently bounces back to the profile (media→media is blocked unless same route). Spec wanted same-person swiping — decide if that gap matters; relaxing it safely would need a policy tweak.
-4. Injected-JS selectors (checklist 1,2,6,7,8): IG bottom nav `div[role=menubar]`, inbox unread marker, next-reel affordance, reel-pager scroll-snap, orientation fix on /create/story/. Any misbehaviour → report exactly what you saw; usually a one-line selector tweak.
-5. Content-rule path `/api/v1/web/launcher/sync` — confirm no app-config side effect; and `ig-firewall-v1` identifier must be bumped whenever ContentRules change (stale compiled cache otherwise).
+## M3 device-check priorities (the real go/no-go — CI can't verify these)
+1. **Renamed to Killagram:** icon + app name visible on home screen (checklist 1).
+2. **Search via Instagram's /explore/search/:** type works, suggestions appear, tap opens profile (checklist 4). /explore/search/ is the only allowed Explore sub-route — confirm other /explore/ paths bounce back.
+3. **Unread-only toggle:** read chats hide when ON, unread stay visible; toggle persists across relaunch (checklist 6). If nothing hides, the blue-dot marker (rgb 74,93,249) may have changed — report the colour you see.
+4. **Story posting via desktop UA:** compose page opens (not the inbox), photo picker works, posting succeeds without "rotate your device" block (checklist 7). After posting, you return to Messages.
+5. **Reel scroll-lock in DMs (checklist 5):** a reel must not scroll to the next; but a reel's comments / a post's caption must still scroll. Both behaviours need injected JS working correctly.
+6. **App-only limits are real (not bugs):** view-once DM photos won't open; in-DM live camera is unavailable (camera roll send works). Report if you find a workaround (unlikely).

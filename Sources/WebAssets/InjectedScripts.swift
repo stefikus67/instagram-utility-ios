@@ -264,56 +264,121 @@ html[data-iu-unread-only] [data-iu-read="1"] { display:none !important; }
 
     /// Exposes `window.__iuSetUnreadOnly(bool)`. Turning it on sets `data-iu-unread-only` on <html> and
     /// marks read inbox rows with `data-iu-read="1"` (CSS in `hideChromeCSS` hides them); turning it off
-    /// removes both. A row is "read" when it has no unread-dot marker. If no row in the list carries a
-    /// marker at all (selector drift, unknown locale), nothing is marked, so the toggle is a no-op rather
-    /// than hiding the whole inbox. While on, a debounced MutationObserver (no polling) re-marks rows as the
-    /// list loads or updates. Document-end.
+    /// removes both marks.
+    ///
+    /// Detection: Instagram's obfuscated classes are unstable, so the only signal used is the unread dot,
+    /// a small (~8px) round element whose computed background-color is Instagram unread-blue
+    /// rgb(74, 93, 249) (matched within +/-6 per channel; the green "active now" dot rgb(28, 209, 79) never
+    /// matches). Row identification: from each blue dot, walk up to the lowest ancestor that is wide
+    /// (>= 60% of the viewport), contains an avatar `img`, and whose parent has at least two img-bearing
+    /// children (i.e. it is one of several sibling rows). Those rows get `data-iu-unread="1"`; every other
+    /// img-bearing sibling under the same parent gets `data-iu-read="1"`.
+    ///
+    /// Safe degrade: if no blue dot or no row is identified, nothing is marked (all rows stay visible), and
+    /// unread rows are never marked read, so the inbox can never be hidden entirely. Only runs under
+    /// `/direct/inbox`. While on, a debounced MutationObserver (no polling) plus history hooks re-mark rows
+    /// as the list hydrates or updates. Document-end.
     public static let unreadToggleJS: String = #"""
 (function(){
   try {
     if (window.__iuSetUnreadOnly) { return; }
 
     var ATTR = 'data-iu-unread-only';
-    var ROW_LINK = 'a[href^="/direct/t/"]';
-    var MARKERS = '[aria-label="Unread"],[aria-label*="nread"],[aria-label*="eprebran"]';
+    // Instagram unread-blue (verified on the mobile inbox): rgb(74, 93, 249). Tolerance per channel.
+    var BLUE = [74, 93, 249];
+    var TOL = 6;
     var enabled = false;
     var observer = null;
     var timer = null;
 
-    function rowFor(link) {
-      try { return (link.closest && link.closest('[role="listitem"]')) || link; } catch (e) { return link; }
+    function isUnreadBlue(color) {
+      try {
+        var m = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/.exec(String(color || ''));
+        if (!m) { return false; }
+        for (var i = 0; i < 3; i++) {
+          if (Math.abs(parseInt(m[i + 1], 10) - BLUE[i]) > TOL) { return false; }
+        }
+        return true;
+      } catch (e) { return false; }
+    }
+
+    function hasImg(el) {
+      try { return !!(el && el.querySelector && el.querySelector('img')); } catch (e) { return false; }
+    }
+
+    function imgChildCount(parent) {
+      var n = 0;
+      try {
+        var kids = parent.children || [];
+        for (var i = 0; i < kids.length; i++) { if (hasImg(kids[i])) { n++; } }
+      } catch (e) {}
+      return n;
     }
 
     function clearMarks() {
       try {
-        var marked = document.querySelectorAll('[data-iu-read]');
-        for (var i = 0; i < marked.length; i++) { marked[i].removeAttribute('data-iu-read'); }
+        var marked = document.querySelectorAll('[data-iu-read],[data-iu-unread]');
+        for (var i = 0; i < marked.length; i++) {
+          marked[i].removeAttribute('data-iu-read');
+          marked[i].removeAttribute('data-iu-unread');
+        }
       } catch (e) {}
+    }
+
+    // Small round-ish elements whose computed background is unread-blue.
+    function findUnreadDots() {
+      var dots = [];
+      try {
+        var cands = document.querySelectorAll('div,span,i');
+        for (var i = 0; i < cands.length; i++) {
+          var el = cands[i];
+          var r = el.getBoundingClientRect();
+          if (!r || r.width < 4 || r.width > 14 || r.height < 4 || r.height > 14) { continue; }
+          if (Math.abs(r.width - r.height) > 3) { continue; }
+          var cs = window.getComputedStyle(el);
+          if (cs && isUnreadBlue(cs.backgroundColor)) { dots.push(el); }
+        }
+      } catch (e) {}
+      return dots;
+    }
+
+    // Walk up from a dot to the row container; null when no confident row is found.
+    function rowForDot(dot) {
+      try {
+        var minW = (window.innerWidth || 0) * 0.6;
+        var node = dot.parentElement;
+        for (var hops = 0; node && node !== document.body && hops < 14; hops++) {
+          var parent = node.parentElement;
+          if (!parent) { return null; }
+          var w = node.getBoundingClientRect().width;
+          if (w >= minW && hasImg(node) && imgChildCount(parent) >= 2) { return node; }
+          node = parent;
+        }
+      } catch (e) {}
+      return null;
     }
 
     function mark() {
       try {
+        clearMarks();
         var path = (window.location && window.location.pathname) || '';
-        if (path.indexOf('/direct/') !== 0) { return; }
-        var links = document.querySelectorAll(ROW_LINK);
-        if (!links || links.length === 0) { return; }
-        var rows = [];
-        var unreadFlags = [];
-        var anyUnread = false;
-        for (var i = 0; i < links.length; i++) {
-          var row = rowFor(links[i]);
-          var unread = false;
-          try { unread = !!(row.querySelector && row.querySelector(MARKERS)); } catch (e) {}
-          if (!unread) { try { unread = !!(links[i].querySelector && links[i].querySelector(MARKERS)); } catch (e) {} }
-          rows.push(row);
-          unreadFlags.push(unread);
-          if (unread) { anyUnread = true; }
+        if (path.indexOf('/direct/inbox') !== 0) { return; }
+        var dots = findUnreadDots();
+        if (dots.length === 0) { return; }
+        var unreadRows = [];
+        var parents = [];
+        for (var i = 0; i < dots.length; i++) {
+          var row = rowForDot(dots[i]);
+          if (!row) { continue; }
+          if (unreadRows.indexOf(row) < 0) { unreadRows.push(row); }
+          if (parents.indexOf(row.parentElement) < 0) { parents.push(row.parentElement); }
         }
-        for (var j = 0; j < rows.length; j++) {
-          if (anyUnread && !unreadFlags[j]) {
-            rows[j].setAttribute('data-iu-read', '1');
-          } else {
-            rows[j].removeAttribute('data-iu-read');
+        if (unreadRows.length === 0) { return; }
+        for (var u = 0; u < unreadRows.length; u++) { unreadRows[u].setAttribute('data-iu-unread', '1'); }
+        for (var p = 0; p < parents.length; p++) {
+          var kids = parents[p].children;
+          for (var k = 0; k < kids.length; k++) {
+            if (unreadRows.indexOf(kids[k]) < 0 && hasImg(kids[k])) { kids[k].setAttribute('data-iu-read', '1'); }
           }
         }
       } catch (e) {}
@@ -357,6 +422,20 @@ html[data-iu-unread-only] [data-iu-read="1"] { display:none !important; }
       } catch (e) {}
     };
 
+    function wrap(name) {
+      try {
+        var original = window.history && window.history[name];
+        if (typeof original !== 'function') { return; }
+        window.history[name] = function() {
+          var result = original.apply(this, arguments);
+          schedule();
+          return result;
+        };
+      } catch (e) {}
+    }
+
+    wrap('pushState');
+    wrap('replaceState');
     window.addEventListener('popstate', schedule);
   } catch (e) {}
 })();

@@ -6,6 +6,10 @@ Date: 2026-10-05 · Status: M1 shipped; **§A below (2026-10-05 pm) supersedes t
 
 ## §A. Pivot to website-based (2026-10-05 pm) — read this first, it overrides §5 Architecture
 
+**M3 (2026-10-06) — Killagram shipped:** Renamed to Killagram with new gold-camera icon. Find people now uses Instagram's own search page (/explore/search/) for real account suggestions as you type. Story posting works by switching to a desktop user agent ONLY while the compose page is open, reverting to mobile everywhere else. Unread-only toggle detects Instagram's unread-blue dot and hides read chats; safe-degrades to showing all rows if the marker changes. **CONFIRMED web limits (permanent, not fixable in a web wrapper):** view-once ("tap to view") DM photos/videos are app-only on every Instagram web surface; live in-app camera capture in DMs is app-only (you can still send photos/videos from the camera roll via the composer's "Add photo or video" button).
+
+---
+
 The original architecture (§5) was a **native** client calling Instagram's internal web endpoints with the
 user's session token. That approach is **abandoned**: building it (reading the session token, replaying
 Instagram's internal requests) was blocked by this toolchain's safety classifier and will not be built here.

@@ -15,6 +15,8 @@ final class WebSurfaceController: NSObject, ObservableObject {
         case messages
         case profile(username: String)
         case create
+        /// Instagram's own account-search page (/explore/search/): live suggestions, no explore grid.
+        case search
         /// There is no web page for the You tab (it is native settings). Kept so callers have one vocabulary;
         /// it maps to the inbox because the signed-in username is not known without reading session data.
         case you
@@ -92,12 +94,27 @@ final class WebSurfaceController: NSObject, ObservableObject {
         if !reload, currentSurface == surface { return }
         guard let url = Self.url(for: surface) else { return }
         currentSurface = surface
+        // The UA is switched BEFORE the load call so the request already carries it.
+        applyUserAgent(for: surface)
         load(url)
+    }
+
+    /// Desktop Safari UA, used ONLY while the story composer is shown: /create/story/ redirects to "/" for
+    /// a mobile UA (which the firewall then bounces to the inbox) and works only for a desktop one. The page
+    /// is a self-contained upload/crop screen that renders fine at phone width.
+    private static let desktopUserAgent =
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+
+    /// The normal state is `customUserAgent == nil`: WebKit then builds the mobile UA from
+    /// `config.applicationNameForUserAgent` (set in init). So "restore" means setting it back to nil.
+    private func applyUserAgent(for surface: Surface?) {
+        webView.customUserAgent = (surface == .create) ? Self.desktopUserAgent : nil
     }
 
     /// Loads Instagram's own login page (signed out, or after Reset).
     func showLogin() {
         currentSurface = nil
+        applyUserAgent(for: nil)
         load(InstagramRoutePolicy.loginURL)
     }
 
@@ -146,6 +163,7 @@ final class WebSurfaceController: NSObject, ObservableObject {
         case .messages, .you: return InstagramRoutePolicy.inboxURL
         case .profile(let username): return InstagramRoutePolicy.profileURL(username: username)
         case .create: return InstagramRoutePolicy.createStoryURL
+        case .search: return InstagramRoutePolicy.searchURL
         }
     }
 
