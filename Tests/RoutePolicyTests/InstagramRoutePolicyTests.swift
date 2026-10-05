@@ -20,8 +20,23 @@ final class InstagramRoutePolicyTests: XCTestCase {
     func testExploreBlocked() {
         XCTAssertEqual(c("https://www.instagram.com/explore/"), .blocked)
         XCTAssertEqual(c("https://www.instagram.com/explore/tags/cats/"), .blocked)
-        XCTAssertEqual(c("https://www.instagram.com/explore/search/"), .blocked)
         XCTAssertEqual(c("https://www.instagram.com/Explore/"), .blocked)
+    }
+
+    // M3: search
+    func testExploreSearchAllowed() {
+        XCTAssertEqual(c("https://www.instagram.com/explore/search/"), .searchAllowed)
+        XCTAssertEqual(c("https://www.instagram.com/explore/search/keyword/?q=x"), .searchAllowed)
+    }
+
+    func testExploreNonSearchBlocked() {
+        XCTAssertEqual(c("https://www.instagram.com/explore/"), .blocked)
+        XCTAssertEqual(c("https://www.instagram.com/explore/tags/cats/"), .blocked)
+        XCTAssertEqual(c("https://www.instagram.com/explore/people/"), .blocked)
+    }
+
+    func testProfileFromSearchAllowed() {
+        XCTAssertEqual(c("https://www.instagram.com/someone/", from: "https://www.instagram.com/explore/search/"), .profileAllowed)
     }
 
     // Reels
@@ -67,7 +82,6 @@ final class InstagramRoutePolicyTests: XCTestCase {
         XCTAssertEqual(c("https://www.instagram.com/"), .blocked)
         XCTAssertEqual(c("https://www.instagram.com/explore/"), .blocked)
         XCTAssertEqual(c("https://www.instagram.com/reels/"), .blocked)            // global reels feed
-        XCTAssertEqual(c("https://www.instagram.com/explore/search/keyword/?q=x"), .blocked)
     }
     // M2: stories
     func testStoriesAllowed() {
@@ -188,6 +202,7 @@ final class InstagramRoutePolicyTests: XCTestCase {
         XCTAssertTrue(RouteCategory.storiesAllowed.isAllowedInApp)
         XCTAssertTrue(RouteCategory.createAllowed.isAllowedInApp)
         XCTAssertTrue(RouteCategory.mediaAllowed.isAllowedInApp)
+        XCTAssertTrue(RouteCategory.searchAllowed.isAllowedInApp)
         XCTAssertFalse(RouteCategory.blocked.isAllowedInApp)
         XCTAssertFalse(RouteCategory.external.isAllowedInApp)
     }

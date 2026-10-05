@@ -8,13 +8,14 @@ enum RouteCategory: String, Equatable, CaseIterable {
     case storiesAllowed = "STORIES_ALLOWED"
     case createAllowed = "CREATE_ALLOWED"
     case mediaAllowed = "MEDIA_ALLOWED"
+    case searchAllowed = "SEARCH_ALLOWED"
     case blocked = "BLOCKED"
     case external = "EXTERNAL"
 
     /// True when the URL may be shown inside the in-app web view.
     var isAllowedInApp: Bool {
         switch self {
-        case .authAllowed, .directAllowed, .profileAllowed, .storiesAllowed, .createAllowed, .mediaAllowed: return true
+        case .authAllowed, .directAllowed, .profileAllowed, .storiesAllowed, .createAllowed, .mediaAllowed, .searchAllowed: return true
         case .blocked, .external: return false
         }
     }
@@ -34,6 +35,7 @@ enum InstagramRoutePolicy {
     static let loginURL = URL(string: "https://www.instagram.com/accounts/login/?next=%2Fdirect%2Finbox%2F")!
 
     static let createStoryURL = URL(string: "https://www.instagram.com/create/story/")!
+    static let searchURL = URL(string: "https://www.instagram.com/explore/search/")!
 
     /// The profile page for an exact username, or nil when the text is not a plausible username or the
     /// resulting route would not be a profile the policy allows (e.g. "explore", "direct").
@@ -71,6 +73,12 @@ enum InstagramRoutePolicy {
         if isAuthPath(segs) { return .authAllowed }
         if first == "create" { return .createAllowed }
         if first == "stories" { return .storiesAllowed }
+        if first == "explore" {
+            if segs.count > 1 && segs[1] == "search" {
+                return .searchAllowed
+            }
+            return .blocked
+        }
         if isMediaPath(segs) {
             guard let source = source else { return .blocked }
             let src = classify(source)
