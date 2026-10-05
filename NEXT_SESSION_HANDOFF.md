@@ -10,7 +10,7 @@
 - Architecture: Instagram's mobile website in WKWebView, made focused by: expanded route firewall (profiles/stories/create/explore-search allowed; feed/explore/reels blocked), content rule list blocking feed/explore/reels/ads at network layer, injected CSS/JS (hide IG nav, lock reel scroll in DMs, screen.orientation override, unread-only inbox toggle).
 - Three native tabs: Messages (web inbox), Find people (Instagram search), You (Post story, Diagnostics, Reset).
 - **Device checklist** (`docs/IPHONE_INSTALL.md` §4): the acceptance gate — 8 steps. Owner to run and report.
-- **CI acceptance:** TBD (CI run details to be recorded).
+- **CI acceptance:** run 37374515675, artifact `InstagramUtility-unsigned-ipa` (242,953 bytes / ~0.24 MB). Unit tests passed; build successful.
 
 ## Known-fragile items to re-verify after Instagram site changes
 Injected-JS selectors that are likely to break if Instagram's markup changes:
