@@ -27,8 +27,8 @@ SideStore → My Apps → **+** → pick the IPA → it signs with your free App
 1. Install the new IPA in SideStore (it replaces the POC; your login may need to be redone once).
 2. First launch: a sheet with Instagram's real login page. Log in (2FA as normal). The sheet closes.
 3. Messages tab: dark Espresso design, "No chats here yet" and an Open web chat button.
-4. Force-quit, reopen. **No login sheet** (session persisted — the POC's untested step 2).
-   If the sheet flashes and then closes by itself, note it — that is the cookie store warming up.
+4. Force-quit, reopen. **No login sheet** — you stay logged in.
+   If the sheet flashes and then closes by itself, tell Claude — the app was still loading your saved login.
 5. You → Preview → turn on **Show sample inbox**. Messages shows 5 sample chats and a stories row.
    Check the look: spacing, sizes, contrast. Note anything that feels off and in which direction.
 6. Type "lu" in Search chats → only Luka remains.
@@ -36,6 +36,6 @@ SideStore → My Apps → **+** → pick the IPA → it signs with your free App
    **the field and Send sit above the keyboard.** Close the keyboard: **Send is visible** (no tab bar).
 8. In web chat, record a voice message (iOS asks for the microphone the first time).
 9. Done → back in the app. You → Reset Instagram Session → confirm → the login sheet appears.
-10. Open web chat, then in You → Reset is not reachable while web chat is open — instead, if Instagram ever logs you out while web chat is open, log in inside web chat or tap Done: the login sheet must appear. Report it if it doesn't.
+10. Only if it happens: if Instagram logs you out while web chat is open (web chat shows Instagram's login page), tap **Done**. The login sheet must appear. If it doesn't, tell Claude. Skip this step if it never happens.
 Known and expected: in web chat you can still swipe from a shared reel to other reels. That is fixed
 by the native viewer in milestone 3; web chat is only the fallback.

@@ -1,7 +1,7 @@
-# Instagram Utility (iOS proof of concept)
+# Instagram Utility (iOS)
 
-A minimal SwiftUI iPhone app that shows Instagram **Direct Messages only**, inside a WKWebView using your own
-genuine Instagram Web login, behind a default-deny navigation firewall (no Home, Explore or Reels).
+A fast native iPhone app for Instagram communication — messages, stories, finding people — with no feed,
+Explore or Reels. Your genuine Instagram login stays on the phone; there is no backend.
 
 Status: v1 in progress — milestone 1 (foundation: design system, login, three-tab shell, cache-first
 inbox with sample data, web chat fallback). Live inbox and native chat are next.
@@ -20,7 +20,7 @@ Push to GitHub → Actions builds on `macos-latest` → download `InstagramUtili
 ```
 swift test
 ```
-Tests cover the route policy only (no Instagram account needed). They do not prove login or messaging works.
+Tests cover the design tokens (contrast and proportions), the core inbox logic and the web-chat route firewall. They need no Instagram account and do not prove login or messaging works.
 
 ## For contributors / agents
 Read [AGENTS.md](AGENTS.md).
