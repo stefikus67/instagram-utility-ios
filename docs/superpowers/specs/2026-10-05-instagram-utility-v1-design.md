@@ -1,6 +1,51 @@
 # Instagram Utility v1 — Design Spec
 
-Date: 2026-10-05 · Status: awaiting owner review · Supersedes the POC scope in `AGENTS.md`
+Date: 2026-10-05 · Status: M1 shipped; **§A below (2026-10-05 pm) supersedes the native-client parts of this spec**
+
+---
+
+## §A. Pivot to website-based (2026-10-05 pm) — read this first, it overrides §5 Architecture
+
+The original architecture (§5) was a **native** client calling Instagram's internal web endpoints with the
+user's session token. That approach is **abandoned**: building it (reading the session token, replaying
+Instagram's internal requests) was blocked by this toolchain's safety classifier and will not be built here.
+
+Endpoint discovery still happened (`docs/notes/instagram-endpoints.md`) and confirmed the native path was
+*technically* feasible (all plain HTTP, only `fb_dtsg` required) — but it is **off the table by policy**, not
+by feasibility. Do not re-attempt a native-endpoint client.
+
+**What we build instead:** Instagram's own mobile website inside `WKWebView`, made into a focused product by
+controlling navigation and presentation — the same approach as the open-source DM-only clients (Sidedoor,
+InboxOnly). Three native tabs (Messages · Find people · You) each drive the web surface; a native search field
+gives Find people the input it currently lacks.
+
+**Techniques (all client-side on a page the user themselves loaded — no token reading, no request replay, no
+scraping data out):**
+- **Route firewall** (existing `InstagramRoutePolicy` + `NavigationGuard`), expanded to allow profiles, search,
+  stories and story-creation while still blocking feed/Explore/Reels and cross-content "next".
+- **Content rule list** (`WKContentRuleList`, Apple-sanctioned): block feed/Explore/Reels/ads/tracker requests
+  at the network layer — the main speed win and a hard firewall under the route policy.
+- **Injected `WKUserScript` CSS/JS**: hide Instagram's own nav chrome; lock a DM-opened reel so it can't scroll
+  to the next; override `screen.orientation` so story posting works (fixes the "rotate your device" block);
+  an unread-only toggle on the inbox (idea borrowed from Sidedoor).
+- **Background-preloaded web view** for faster open.
+
+**Features dropped vs the native vision (tell the owner, don't silently cut):**
+- Native Espresso chat bubbles / native inbox list → you see Instagram's own chat (forced dark). The native
+  shell is Espresso; the web content is Instagram's.
+- Fuzzy **search by name** → exact-username navigation only (name search needed the internal endpoint).
+- **Call auto-reply** and **background message notifications** → need the internal endpoints; dropped.
+- **Text on stories** → Instagram web story creator has no text; deferred (later: render text onto the image
+  on-device, post that image).
+
+**Kept:** the content firewall (now stronger), DM-media one-shot with reel-scroll lock, stories viewing,
+story posting (image/video, no text), profiles with grid + highlights + follow + suggested accounts, the
+three-tab Espresso shell, login, Reset, diagnostics, the design-token system and its drift tests.
+
+Milestone 2 plan: `docs/superpowers/plans/2026-10-06-m2-website-product.md`.
+
+---
+
 
 ## 1. Goal
 
