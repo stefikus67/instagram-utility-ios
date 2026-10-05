@@ -16,6 +16,8 @@ targets:
     sources:
       - Sources/App
       - Sources/RoutePolicy
+      - Sources/DesignTokens
+      - Sources/Core
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.instagramutility.app
@@ -24,6 +26,7 @@ targets:
       path: Generated/Info.plist
       properties:
         CFBundleDisplayName: Instagram Utility
+        UIUserInterfaceStyle: Dark
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         UIApplicationSceneManifest:

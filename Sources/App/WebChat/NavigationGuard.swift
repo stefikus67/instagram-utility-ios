@@ -100,6 +100,17 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
         return nil
     }
 
+    /// Voice messages in web chat need the microphone. Only Instagram may ask; iOS still shows its prompt.
+    func webView(_ webView: WKWebView,
+                 requestMediaCapturePermissionFor origin: WKSecurityOrigin,
+                 initiatedByFrame frame: WKFrameInfo,
+                 type: WKMediaCaptureType,
+                 decisionHandler: @escaping (WKPermissionDecision) -> Void) {
+        let host = origin.host
+        let isInstagram = origin.protocol == "https" && InstagramHost.isInstagram(host)
+        decisionHandler(isInstagram ? .prompt : .deny)
+    }
+
     private func openExternally(_ url: URL) {
         guard let scheme = url.scheme?.lowercased(), scheme == "https" || scheme == "http" else { return }
         UIApplication.shared.open(url)

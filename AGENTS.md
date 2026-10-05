@@ -1,53 +1,44 @@
 # AGENTS.md — Instagram Utility (iOS)
 
-Read this before changing anything.
+Read this, then the spec: `docs/superpowers/specs/2026-10-05-instagram-utility-v1-design.md`.
 
-## Product philosophy
-Instagram as a **communication protocol**, not a content-consumption environment. This is our own app
-whose UI simply has no Home feed, Explore or Reels — not Instagram with buttons hidden.
-**Capability does not exist > capability exists but is hidden.** Never solve an attention requirement with CSS only.
+## Product
+A fast native iPhone app for Instagram communication: DMs, stories, story posting, finding people.
+**No feed, Explore or Reels — the code for them must not exist.** Content is only ever shown from a
+profile the user deliberately opened or something someone sent them.
 
 ## Hard rules
-1. **Zero cost.** No paid Apple Developer Program, signing service, server, hosting, CI or dependency.
-2. **No backend.** The app must work standalone on the phone. No always-on PC, no cloud.
-3. **No private Instagram API** (no instagrapi/aiograpi, no faked mobile signatures). Genuine Instagram Web in a WKWebView only.
-4. **Never handle credentials.** Login happens on Instagram's own page. No password variables, no credential interception.
-5. **Never log/display/commit** cookies, session ids, tokens, Apple/signing material, user data.
-   (Cookie *names* may be checked for auth state; values are never stored or shown.)
-6. No high-volume/automated Instagram activity. Behave like a human using Instagram Web.
-7. Do not add feed/Explore/Reels/discovery surfaces, even "temporarily". Default-deny in the route policy.
+1. €0. No paid Apple program, server, hosting, CI or dependency.
+2. No backend. The app works alone on the phone.
+3. Data comes from the internal endpoints instagram.com itself uses, called from the user's own session
+   on the phone (spec §2). Never imitate the official app's device signatures. Respect the request
+   budget in spec §5.
+4. Never handle the password. Login is Instagram's own page in `InstagramSession`'s web view.
+5. Never log, display or commit cookies, session ids, tokens or user data. Fixtures use fake names.
+6. Every colour/size in views comes from `Theme` / `Spacing` / `Metrics` / `Radius` / `TypeScale`.
+   No raw numbers or hex in views. Token tests fail the build if the system drifts.
 
-## Architecture (where things go)
-| Concern | File |
+## Where things go
+| Concern | Location |
 |---|---|
-| Navigation firewall (pure logic, unit-tested) | `Sources/RoutePolicy/InstagramRoutePolicy.swift` |
-| Firewall enforcement on the web view (delegate + URL KVO for SPA routes) | `Sources/App/Web/NavigationGuard.swift` |
-| WKWebView, persistent session, auth state, reset | `Sources/App/Web/InstagramSession.swift` |
-| SwiftUI wrapper for the web view | `Sources/App/Web/InstagramWebView.swift` |
-| App shell / tabs / Messages screen | `Sources/App/App/` |
-| Settings + Reset Session | `Sources/App/Settings/SettingsView.swift` |
-| Diagnostics state | `Sources/App/Diagnostics/DiagnosticsStore.swift` |
-| Tests | `Tests/RoutePolicyTests/` |
-| Project definition | `project.yml` (XcodeGen; `.xcodeproj` is generated, never committed) |
+| Colours, spacing, type, radii, sizes (+ tests) | `Sources/DesignTokens/`, `Tests/DesignTokensTests/` |
+| Testable app logic (models, ordering, search, cache) | `Sources/Core/`, `Tests/CoreTests/` |
+| Web-chat route firewall | `Sources/RoutePolicy/`, `Tests/RoutePolicyTests/` |
+| SwiftUI components | `Sources/App/DesignSystem/` |
+| Screens | `Sources/App/<Feature>/` (Inbox, FindPeople, You, WebChat, Session) |
+| Login / session web view | `Sources/App/Session/InstagramSession.swift` |
+| App shell and tabs | `Sources/App/App/RootView.swift`, `DesignSystem/PillTabBar.swift` |
 
-Boundaries: `Sources/RoutePolicy` imports Foundation only (no UIKit/WebKit) so `swift test` runs anywhere.
-Route rules change there first, with tests, before any UI work. Example: "add an unread-only toggle to
-Messages" → `Sources/App/App/MessagesView.swift` (and, once native inbox exists, a new folder under `Sources/App/`).
+Example: "add an unread-only toggle to Messages" → filtering rule in `Sources/Core/InboxSearch.swift`
+(with a test), toggle UI in `Sources/App/Inbox/InboxView.swift`.
 
 ## Build & test
-- Development can happen on Windows; **iOS builds only happen in CI** (`.github/workflows/build-ios.yml`, `macos-latest`).
-- Logic tests: `swift test` (needs a Swift toolchain; runs in CI on every push).
-- CI: `swift test` → `brew install xcodegen` → `xcodegen generate` → `xcodebuild` Release, `generic/platform=iOS`,
-  `CODE_SIGNING_ALLOWED=NO` → wrap `.app` in `Payload/` → zip to `InstagramUtility-unsigned.ipa` → upload artifact.
-- Install on device: `docs/IPHONE_INSTALL.md` (SideStore, free Apple ID, 7-day refresh).
+- `swift test` runs every pure-logic test (Linux or macOS). Locally on this Windows machine use the WSL
+  command in `docs/superpowers/plans/2026-10-05-m1-foundation.md` ("How to run things").
+- The iOS app builds only in CI (`.github/workflows/build-ios.yml`): `swift test` → XcodeGen → unsigned
+  Release build → `InstagramUtility-unsigned.ipa` artifact. Install with SideStore (`docs/IPHONE_INSTALL.md`).
+- SwiftUI views have no unit tests; each milestone ends with the owner's on-device checklist.
 
-## Firewall notes
-- Instagram is an SPA: most route changes are `pushState`, not WK navigations. `NavigationGuard` observes `webView.url`
-  and hard-redirects from blocked routes to the last allowed `/direct/` page.
-- DM media (`/p/…`, `/reel/…`) is allowed only when the previous allowed route was `/direct/…`. From media, any other media
-  route is blocked (no reel chains). Query-only changes on the same media page are allowed.
-- Login lands on `/` sometimes; `/` is blocked and redirects to the inbox. That is intended.
-
-## Intentionally absent (do not add without being asked)
-Home/Explore/Reels, Stories, posting, account search, profiles, followers/following, native inbox/chat,
-push notifications, backend, AI features, automation, multiple accounts, analytics.
+## Current state
+Milestone 1 (foundation). Inbox shows sample data only; the live inbox and native chat come next,
+after the endpoint-discovery session. Chats open in web chat for now.
