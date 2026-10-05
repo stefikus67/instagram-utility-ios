@@ -23,15 +23,14 @@ SideStore → My Apps → **+** → pick the IPA → it signs with your free App
   with an App ID error, remove another sideloaded app.
 - No push notifications via APNs (accepted for V1).
 
-## 4. Milestone 2 device checklist (on the iPhone)
-1. Install the new IPA in SideStore (LocalDevVPN on). Log in. Messages shows Instagram's inbox, and Instagram's own bottom nav bar is **not visible**.
-2. Try to reach Home / Explore / Reels (tap any links). Each bounces back to a safe page; You → Diagnostics "Blocked navigations" goes up. Report any way through.
-3. Open a chat; send a text and a photo; the field + Send sit above the keyboard; Send stays visible.
-4. Open a reel someone sent you in a DM → it opens → swiping/scrolling does **not** move to another reel. (This was the main POC failure.) But a reel's comments / a post's caption should still scroll.
-5. Find people → type a username → their profile opens (grid, highlights). Open one of their posts; it shows; you can't swipe to a stranger's post.
-6. Open that person's stories/highlights; watch a few; closing returns cleanly; no jump into suggested content.
-7. You → Post a story → pick a photo → it does **not** say "rotate your device" → post it (delete after). Close returns to Messages.
-8. Messages → "Unread only" on → read chats hide. Relaunch the app → the toggle is still on.
-9. You → Reset Instagram Session → confirm → the login page returns.
+## 4. Milestone 3 device checklist (on the iPhone)
+1. Install the new IPA in SideStore (LocalDevVPN on). The app on your home screen now shows "Killagram" and the new gold-camera icon.
+2. Log in. Messages shows Instagram's inbox; no Instagram bottom nav bar.
+3. Try to reach Home / Explore / Reels — each bounces back; Diagnostics "Blocked navigations" goes up.
+4. Find people tab → Instagram's search appears → type a name → it suggests accounts as you type → tap one → their profile opens (grid, highlights). Open a post; you can't swipe to a stranger's post.
+5. Open a reel someone sent in a DM → it opens → does NOT scroll to another reel; a post's caption/comments still scroll.
+6. Messages → "Unread only" ON → read chats hide, unread stay. If nothing hides, report it (the marker may have changed). Relaunch → toggle still on.
+7. You → Post a story → it opens the upload/crop screen (NOT the inbox) → pick a photo → post (delete after). Close returns to Messages.
+8. You → Reset Instagram Session → login returns.
 
-**Note which steps use injected JS** (1, 2, 4, 6, 7, 8) — if any misbehaves, report exactly what you saw; those are selector-dependent and may need a one-line follow-up tweak.
+KNOWN APP-ONLY LIMITS (not bugs): view-once "tap to view" DM photos/videos won't open (Instagram locks them to its app); there's no in-DM live camera (send from camera roll instead).
