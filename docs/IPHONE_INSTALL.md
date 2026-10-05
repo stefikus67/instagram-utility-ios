@@ -23,16 +23,19 @@ SideStore → My Apps → **+** → pick the IPA → it signs with your free App
   with an App ID error, remove another sideloaded app.
 - No push notifications via APNs (accepted for V1).
 
-## 4. Human verification checklist
-1. Launch Instagram Utility → Messages tab shows Instagram's real login page (never give credentials to anyone else).
-2. Log in (handle 2FA/challenge normally). Land on the DM inbox.
-3. Force-quit and reopen → still logged in (session persisted). Settings → Session shows "Logged in".
-4. Open a conversation; text and photos display.
-5. Send a test message to yourself/a friend; it arrives.
-6. Try to reach Home / Explore / Reels (tap bottom-bar icons, any links). Each must bounce back to a DM page;
-   Settings → "Blocked navigations" increases. **Report any way in.**
-7. Open a Reel/post someone sent in a DM → it opens once with "Back to chat". Try swiping/tapping to more reels → must be blocked.
-8. Settings → Reset Instagram Session → confirm → logged out; log in again works.
-9. After ≥1 day, refresh in SideStore; confirm the app still launches and stays logged in.
-
-Never share your Instagram password or session data with anyone; do not paste cookies in issues.
+## 4. Milestone 1 checklist (on the iPhone)
+1. Install the new IPA in SideStore (it replaces the POC; your login may need to be redone once).
+2. First launch: a sheet with Instagram's real login page. Log in (2FA as normal). The sheet closes.
+3. Messages tab: dark Espresso design, "No chats here yet" and an Open web chat button.
+4. Force-quit, reopen. **No login sheet** (session persisted — the POC's untested step 2).
+   If the sheet flashes and then closes by itself, note it — that is the cookie store warming up.
+5. You → Preview → turn on **Show sample inbox**. Messages shows 5 sample chats and a stories row.
+   Check the look: spacing, sizes, contrast. Note anything that feels off and in which direction.
+6. Type "lu" in Search chats → only Luka remains.
+7. Tap a chat → web chat opens full screen. Open a conversation, tap the message field:
+   **the field and Send sit above the keyboard.** Close the keyboard: **Send is visible** (no tab bar).
+8. In web chat, record a voice message (iOS asks for the microphone the first time).
+9. Done → back in the app. You → Reset Instagram Session → confirm → the login sheet appears.
+10. Open web chat, then in You → Reset is not reachable while web chat is open — instead, if Instagram ever logs you out while web chat is open, log in inside web chat or tap Done: the login sheet must appear. Report it if it doesn't.
+Known and expected: in web chat you can still swipe from a shared reel to other reels. That is fixed
+by the native viewer in milestone 3; web chat is only the fallback.

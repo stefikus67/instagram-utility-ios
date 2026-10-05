@@ -3,11 +3,14 @@
 A minimal SwiftUI iPhone app that shows Instagram **Direct Messages only**, inside a WKWebView using your own
 genuine Instagram Web login, behind a default-deny navigation firewall (no Home, Explore or Reels).
 
-Status: POC. Code + CI are written; **nothing has been run on a real iPhone or against a real Instagram account yet.**
+Status: v1 in progress — milestone 1 (foundation: design system, login, three-tab shell, cache-first
+inbox with sample data, web chat fallback). Live inbox and native chat are next.
+Spec: `docs/superpowers/specs/2026-10-05-instagram-utility-v1-design.md`.
 
 ## How it works
-SwiftUI shell → one persistent `WKWebView` (real Instagram login, session stays on device) →
-`InstagramRoutePolicy` classifies every URL (`AUTH_ALLOWED`, `DIRECT_ALLOWED`, `DM_MEDIA_ALLOWED_ONCE`, `BLOCKED`, `EXTERNAL`).
+Native SwiftUI screens styled by one token system (Espresso v3). A hidden persistent `WKWebView` holds
+your genuine Instagram login on the device. Web chat (Instagram's own page, behind a route firewall)
+is the fallback. No backend.
 
 ## Build (no Mac needed)
 Push to GitHub → Actions builds on `macos-latest` → download `InstagramUtility-unsigned.ipa` from the run's artifacts
