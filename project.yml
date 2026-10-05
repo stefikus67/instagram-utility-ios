@@ -17,7 +17,7 @@ targets:
       - Sources/App
       - Sources/RoutePolicy
       - Sources/DesignTokens
-      - Sources/Core
+      - Sources/WebAssets
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.instagramutility.app

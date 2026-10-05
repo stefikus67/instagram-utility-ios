@@ -41,9 +41,27 @@ struct RootView: View {
 
     @ViewBuilder private var screen: some View {
         switch tab {
-        case .messages: InboxView()
+        case .messages: MessagesPlaceholderView()
         case .findPeople: FindPeopleView()
         case .you: YouView()
         }
+    }
+}
+
+/// Temporary Messages tab body until the web surface is wired in (milestone 2, task 5).
+private struct MessagesPlaceholderView: View {
+    @EnvironmentObject private var session: InstagramSession
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.l) {
+            Text("Messages").font(Theme.largeTitle).foregroundStyle(Theme.text)
+            Button("Open web chat") { session.openWebChat() }
+                .font(Theme.body)
+                .foregroundStyle(Theme.gold)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, Spacing.screenEdge)
+        .padding(.top, Spacing.s)
     }
 }

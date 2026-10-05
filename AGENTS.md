@@ -22,15 +22,12 @@ profile the user deliberately opened or something someone sent them.
 | Concern | Location |
 |---|---|
 | Colours, spacing, type, radii, sizes (+ tests) | `Sources/DesignTokens/`, `Tests/DesignTokensTests/` |
-| Testable app logic (models, ordering, search, cache) | `Sources/Core/`, `Tests/CoreTests/` |
+| Injected web content rules and scripts (+ tests) | `Sources/WebAssets/`, `Tests/WebAssetsTests/` |
 | Web-chat route firewall | `Sources/RoutePolicy/`, `Tests/RoutePolicyTests/` |
 | SwiftUI components | `Sources/App/DesignSystem/` |
-| Screens | `Sources/App/<Feature>/` (Inbox, FindPeople, You, WebChat, Session) |
+| Screens | `Sources/App/<Feature>/` (FindPeople, You, WebChat, Session) |
 | Login / session web view | `Sources/App/Session/InstagramSession.swift` |
 | App shell and tabs | `Sources/App/App/RootView.swift`, `DesignSystem/PillTabBar.swift` |
-
-Example: "add an unread-only toggle to Messages" → filtering rule in `Sources/Core/InboxSearch.swift`
-(with a test), toggle UI in `Sources/App/Inbox/InboxView.swift`.
 
 ## Build & test
 - `swift test` runs every pure-logic test (Linux or macOS). Locally on this Windows machine use the WSL
