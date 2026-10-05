@@ -106,7 +106,9 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo,
                  type: WKMediaCaptureType,
                  decisionHandler: @escaping (WKPermissionDecision) -> Void) {
-        decisionHandler(origin.host.hasSuffix("instagram.com") ? .prompt : .deny)
+        let host = origin.host
+        let isInstagram = origin.protocol == "https" && (host == "instagram.com" || host.hasSuffix(".instagram.com"))
+        decisionHandler(isInstagram ? .prompt : .deny)
     }
 
     private func openExternally(_ url: URL) {

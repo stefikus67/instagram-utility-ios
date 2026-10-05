@@ -53,10 +53,9 @@ struct YouView: View {
         }
         .confirmationDialog("Reset Instagram session?", isPresented: $confirmReset, titleVisibility: .visible) {
             Button("Reset and sign out", role: .destructive) {
-                Task {
-                    await session.resetSession()
-                    inbox.clearAll()
-                }
+                // Clear cached user data first, so it is gone even if the app is killed mid-reset.
+                inbox.clearAll()
+                Task { await session.resetSession() }
             }
             Button("Cancel", role: .cancel) {}
         }

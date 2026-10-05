@@ -67,8 +67,12 @@ final class InstagramSession: NSObject, ObservableObject, WKHTTPCookieStoreObser
         let cookies: [HTTPCookie] = await withCheckedContinuation { cont in
             webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cont.resume(returning: $0) }
         }
-        let has = cookies.contains { $0.domain.hasSuffix("instagram.com") && $0.name == "sessionid" && !$0.value.isEmpty }
-        authState = has ? .authenticated : .loggedOut
+        let has = cookies.contains {
+            let d = $0.domain.hasPrefix(".") ? String($0.domain.dropFirst()) : $0.domain
+            return (d == "instagram.com" || d.hasSuffix(".instagram.com")) && $0.name == "sessionid" && !$0.value.isEmpty
+        }
+        let newState: AuthenticationState = has ? .authenticated : .loggedOut
+        if newState != authState { authState = newState }
     }
 
     nonisolated func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {

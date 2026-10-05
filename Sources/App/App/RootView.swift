@@ -6,7 +6,8 @@ struct RootView: View {
     @State private var tab: AppTab = .messages
 
     private var loginRequired: Binding<Bool> {
-        Binding(get: { session.authState == .loggedOut }, set: { _ in })
+        // While web chat is open, Instagram's login page shows inside it; the sheet appears after Done.
+        Binding(get: { session.authState == .loggedOut && !session.webChatPresented }, set: { _ in })
     }
 
     var body: some View {
