@@ -1,14 +1,15 @@
 import SwiftUI
 
-/// The only three destinations in the app (spec §4). There is deliberately no feed, Explore or Reels tab.
+/// The only four destinations in the app (spec §4, plus Settings from M4). There is deliberately no feed, Explore or Reels tab.
 enum AppTab: CaseIterable, Hashable {
-    case messages, findPeople, you
+    case messages, findPeople, you, settings
 
     var title: String {
         switch self {
         case .messages: return "Messages"
         case .findPeople: return "Find people"
         case .you: return "You"
+        case .settings: return "Settings"
         }
     }
 
@@ -17,6 +18,7 @@ enum AppTab: CaseIterable, Hashable {
         case .messages: return "bubble.left.and.bubble.right"
         case .findPeople: return "magnifyingglass"
         case .you: return "person.crop.circle"
+        case .settings: return "gearshape"
         }
     }
 }

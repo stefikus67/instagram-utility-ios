@@ -1,49 +1,49 @@
 import SwiftUI
 
+/// You: the signed-in user's own Instagram profile in the shared web surface. The username is auto-detected
+/// from Instagram's page (see `InjectedScripts.ownProfileJS`); typing it in is only the fallback.
 struct YouView: View {
     @EnvironmentObject private var session: InstagramSession
-    @EnvironmentObject private var diagnostics: DiagnosticsStore
     @EnvironmentObject private var surface: WebSurfaceController
-    @State private var confirmReset = false
-
-    private var version: String {
-        let v = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
-        let b = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
-        return "\(v) (\(b))"
-    }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.xl) {
-                Text("You").font(Theme.largeTitle).foregroundStyle(Theme.text)
-                    .padding(.top, Spacing.s)
-
-                SettingsSection(title: "Diagnostics") {
-                    ValueRow(title: "Version", value: version)
-                    ValueRow(title: "Session", value: session.authState.rawValue)
-                    ValueRow(title: "Content rules", value: surface.contentRulesActive ? "Active" : "Off")
-                    ValueRow(title: "Web host", value: diagnostics.currentHost)
-                    ValueRow(title: "Route", value: diagnostics.currentCategory?.rawValue ?? "-")
-                    ValueRow(title: "Blocked navigations", value: String(diagnostics.blockedCount))
-                    ValueRow(title: "Last blocked", value: diagnostics.lastBlockedSurface?.rawValue ?? "-")
-                }
-
-                SettingsSection(title: "Account") {
-                    Button("Reset Instagram Session", role: .destructive) { confirmReset = true }
-                        .font(Theme.body)
-                    Text("Signs you out and deletes your Instagram session.")
-                        .font(Theme.label)
-                        .foregroundStyle(Theme.text3)
-                }
+        if session.authState == .loggedOut {
+            Theme.bg
+        } else if surface.ownUsername != nil {
+            VStack(spacing: 0) {
+                header
+                    .padding(.horizontal, Spacing.screenEdge)
+                    .padding(.vertical, Spacing.s)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                WebSurface()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .coversInstagramNav()
             }
-            .padding(.horizontal, Spacing.screenEdge)
+            // Reload: browsing from the profile to another profile leaves the surface value unchanged, so a plain
+            // show(.ownProfile) would be skipped as already-current (same reason as Find people).
+            .onAppear { surface.show(.ownProfile, reload: true) }
+            .onChange(of: surface.ownUsername) { _ in surface.show(.ownProfile, reload: true) }
+        } else {
+            fallback
         }
-        .confirmationDialog("Reset Instagram session?", isPresented: $confirmReset, titleVisibility: .visible) {
-            Button("Reset and sign out", role: .destructive) {
-                Task { await session.resetSession() }
-            }
-            Button("Cancel", role: .cancel) {}
+    }
+
+    private var header: some View {
+        Text("You").font(Theme.largeTitle).foregroundStyle(Theme.text)
+    }
+
+    /// No username known yet: Messages has not been opened since install/Reset, or detection failed.
+    private var fallback: some View {
+        VStack(alignment: .leading, spacing: Spacing.l) {
+            header
+            Text("Open Messages once so Killagram can find your profile, or type your username:")
+                .font(Theme.preview)
+                .foregroundStyle(Theme.text2)
+            UsernameEntry(buttonTitle: "Open profile") { surface.setOwnUsername($0) }
+            Spacer()
         }
-        .task { await session.refreshAuthState() }
+        .padding(.horizontal, Spacing.screenEdge)
+        .padding(.top, Spacing.s)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }

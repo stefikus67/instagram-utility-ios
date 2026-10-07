@@ -7,7 +7,7 @@ Read this, then the spec: `docs/superpowers/specs/2026-10-05-instagram-utility-v
 **No feed, Explore or Reels — the code for them must not exist.** Content is only ever shown from a
 profile the user deliberately opened or something someone sent them.
 
-**Architecture (Milestone 3 onwards):** Instagram's own mobile website inside `WKWebView`, made into a focused product by controlling navigation and presentation. Three native tabs (Messages · Find people · You) each drive the web surface. Search on Find people uses Instagram's own /explore/search/ page for real account suggestions; that is the only Explore sub-route allowed. Story posting was dropped in M4 (it never worked reliably); the route policy's create-story rules and the orientation override remain, unused by the UI.
+**Architecture (Milestone 3 onwards):** Instagram's own mobile website inside `WKWebView`, made into a focused product by controlling navigation and presentation. Four native tabs (Messages · Find people · You · Settings): the first three drive the web surface (You shows your own profile), Settings is native. Search on Find people uses Instagram's own /explore/search/ page for real account suggestions; that is the only Explore sub-route allowed. Story posting was dropped in M4 (it never worked reliably); the route policy's create-story rules and the orientation override remain, unused by the UI.
 
 ## Hard rules
 1. €0. No paid Apple program, server, hosting, CI or dependency.
