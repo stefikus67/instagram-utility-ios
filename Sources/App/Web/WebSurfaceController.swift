@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import WebKit
 
 /// Owns the one WKWebView that shows Instagram's mobile site, and everything that shapes it into this
@@ -62,7 +63,7 @@ final class WebSurfaceController: NSObject, ObservableObject {
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.allowsBackForwardNavigationGestures = false
         webView.isOpaque = false
-        webView.backgroundColor = .black
+        webView.backgroundColor = UIColor(Theme.bg)
         self.webView = webView
         super.init()
 

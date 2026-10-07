@@ -16,9 +16,9 @@ final class ColorTests: XCTestCase {
     }
 
     func testMatchesValuesMeasuredDuringDesign() {
-        // Spec §4 colour table.
-        XCTAssertEqual(contrastRatio(Palette.text, Palette.card), 17.6, accuracy: 0.1)
-        XCTAssertEqual(contrastRatio(Palette.text2, Palette.card), 11.8, accuracy: 0.1)
+        // Instagram-matched palette (M4), recomputed with contrastRatio.
+        XCTAssertEqual(contrastRatio(Palette.text, Palette.card), 15.7, accuracy: 0.1)
+        XCTAssertEqual(contrastRatio(Palette.text2, Palette.card), 11.4, accuracy: 0.1)
         XCTAssertEqual(contrastRatio(Palette.goldInk, Palette.gold), 14.6, accuracy: 0.1)
     }
 

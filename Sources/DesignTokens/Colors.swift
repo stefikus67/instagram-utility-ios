@@ -33,23 +33,23 @@ public func contrastRatio(_ a: RGB, _ b: RGB) -> Double {
     return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
 }
 
-/// Espresso v3 — dark, warm, maximum contrast (spec §4).
+/// Instagram-matched dark (M4) — native chrome blends with IG's web pages.
 public enum Palette {
-    public static let bg = RGB(hex: 0x000000)
-    public static let card = RGB(hex: 0x1d1814)
-    public static let raise = RGB(hex: 0x26201b)
+    public static let bg = RGB(hex: 0x0c1014)
+    public static let card = RGB(hex: 0x212328)
+    public static let raise = RGB(hex: 0x25292e)
     public static let text = RGB(hex: 0xffffff)
-    public static let text2 = RGB(hex: 0xddd2c6)
-    public static let text3 = RGB(hex: 0xc6b9ab)
-    public static let placeholder = RGB(hex: 0xa99c8f)
+    public static let text2 = RGB(hex: 0xdbdbdb)
+    public static let text3 = RGB(hex: 0xa8a8a8)
+    public static let placeholder = RGB(hex: 0x8e8e8e)
     public static let gold = RGB(hex: 0xffdfa8)
     public static let goldInk = RGB(hex: 0x1a1007)
     // Decorative only (never carry text):
     public static let coral = RGB(hex: 0xf2906f)
-    public static let border = RGB(hex: 0x2f2822)
-    public static let seenRing = RGB(hex: 0x3a322c)
-    public static let avatarTop = RGB(hex: 0x4a3e33)
-    public static let avatarBottom = RGB(hex: 0x2b241e)
+    public static let border = RGB(hex: 0x363636)
+    public static let seenRing = RGB(hex: 0x3a3e44)
+    public static let avatarTop = RGB(hex: 0x3a3e44)
+    public static let avatarBottom = RGB(hex: 0x25292e)
 
     public static let minimumTextContrast = 4.5
 
