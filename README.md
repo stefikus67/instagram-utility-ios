@@ -10,7 +10,7 @@ Spec: `docs/superpowers/specs/2026-10-05-instagram-utility-v1-design.md`.
 Instagram's own mobile website in `WKWebView`, made into a focused product by: expanded route firewall
 (profiles/stories/create/explore-search allowed; feed/explore/reels blocked), a content rule list blocking feed/explore/reels/ads
 requests at the network layer, and injected CSS/JS (hide IG nav chrome, lock reel scroll in DMs, override
-screen.orientation, unread-only inbox toggle, own-username detection). Find people uses Instagram's own search page for real account suggestions.
+screen.orientation, own-username detection). Find people uses Instagram's own search page for real account suggestions.
 Four native tabs: Messages (web inbox), Find people (Instagram search), You (your own profile),
 Settings (username / Diagnostics / Reset). No backend.
 

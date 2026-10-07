@@ -32,7 +32,7 @@ profile the user deliberately opened or something someone sent them.
 **Techniques** (spec §A):
 - **Route firewall** (NavigationGuard): blocks feed/Explore (except /explore/search/)/Reels/cross-content "next"; allows profiles, search, stories, story creation.
 - **Content rule list** (`WKContentRuleList`): blocks feed/Explore/Reels/ads/tracker requests at the network layer (hard firewall, main speed win).
-- **Injected CSS/JS**: hides Instagram's nav chrome; locks DM-opened reels so they can't scroll to the next; overrides `screen.orientation` (kept from the dropped story-posting flow); unread-only inbox toggle (detects Instagram's unread-blue dot).
+- **Injected CSS/JS**: hides Instagram's nav chrome; locks DM-opened reels so they can't scroll to the next; overrides `screen.orientation` (kept from the dropped story-posting flow).
 
 **Confirmed web limits** (permanent, not fixable in a web wrapper): view-once ("tap to view") DM photos/videos are app-only on every Instagram web surface; live in-app camera capture in DMs is app-only (camera-roll send still works).
 
