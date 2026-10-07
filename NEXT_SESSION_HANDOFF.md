@@ -1,6 +1,7 @@
 # Handoff — Killagram (Instagram Utility)
 
 ## State (2026-10-07 — M4 implemented on branch `m4-profile-settings`, not merged, device-unverified)
+**M4 CI green:** run 37608770201, artifact `InstagramUtility-unsigned-ipa` (257,812 bytes): https://github.com/stefikus67/instagram-utility-ios/actions/runs/37608770201
 Plan: `docs/superpowers/plans/2026-10-07-m4-profile-settings-palette.md`. Device checklist: `docs/IPHONE_INSTALL.md` §5.
 - **Palette** matches Instagram's dark web theme (bg #0C1014, card #212328, raise #25292E); gold stays the accent.
 - **Story posting removed** (app layer). `InstagramRoutePolicy` create-story rules and `orientationFixJS` are kept, unused by the UI.
