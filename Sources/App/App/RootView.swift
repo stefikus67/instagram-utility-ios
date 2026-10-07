@@ -8,9 +8,7 @@ struct RootView: View {
     @State private var tab: AppTab = .messages
 
     private var loginRequired: Binding<Bool> {
-        // A full-screen web presentation (story creation) shows Instagram's own pages, login included,
-        // so the sheet must not stack on it; it appears after that closes.
-        Binding(get: { session.authState == .loggedOut && !surface.isPresentedFullScreen }, set: { _ in })
+        Binding(get: { session.authState == .loggedOut }, set: { _ in })
     }
 
     var body: some View {
