@@ -5,8 +5,9 @@ import Foundation
 /// Hard guardrails (enforced by InjectedScriptsTests):
 /// - Every JS string is an invoked IIFE wrapped in try/catch, so a wrong selector can never break the page.
 /// - The JS never reads auth data and never makes network requests. It only hides/shows DOM, controls
-///   scroll/navigation events, overrides screen.orientation, toggles an attribute, and posts a path string
-///   to the native `iuBlocked` message handler.
+///   scroll/navigation events, overrides screen.orientation, toggles an attribute, posts a path string
+///   to the native `iuBlocked` message handler, and posts the signed-in username (read from one nav
+///   link's href) to the native `iuOwnUsername` handler.
 /// - No polling. Route changes are caught by patching history.pushState/replaceState and listening to popstate.
 /// - Every DOM lookup is null-guarded.
 ///
@@ -441,6 +442,96 @@ html[data-iu-unread-only] [data-iu-read="1"] { display:none !important; }
 })();
 """#
 
+    /// Finds the signed-in account's own username and posts it once per page to the native `iuOwnUsername` handler.
+    /// Reads only a link's `href` in Instagram's own navigation (no cookies, storage, network or IG data
+    /// structures), and only on the inbox (`/direct/`), where that navigation links to the user's own profile.
+    /// A debounced MutationObserver plus history hooks (no polling) retry until the nav has rendered. Document-end.
+    public static let ownProfileJS: String = #"""
+(function(){
+  try {
+    if (window.__iuOwnProfileInstalled) { return; }
+    window.__iuOwnProfileInstalled = true;
+
+    // First path segments that are Instagram sections, never usernames.
+    var RESERVED = ['explore','reels','reel','direct','accounts','create','stories','p','tv','about','legal',
+      'developer','web','challenge','emails','session','graphql','api','oauth','privacy','terms','help',
+      'directory','topics','locations','nametag','your_activity','notifications','lite','threads'];
+    var sent = null;
+    var observer = null;
+    var timer = null;
+
+    // Only the inbox: on someone else's profile, a nav-like container can link to *their* "/<name>/".
+    function onInbox() {
+      try { return ((window.location && window.location.pathname) || '').indexOf('/direct/') === 0; }
+      catch (e) { return false; }
+    }
+
+    // The signed-in account's profile link lives in Instagram's own (hidden) navigation bar.
+    function findOwnUsername() {
+      try {
+        var navs = document.querySelectorAll('[role="menubar"], nav, [role="navigation"]');
+        for (var i = 0; i < navs.length; i++) {
+          var links = navs[i].querySelectorAll('a[href]');
+          for (var j = 0; j < links.length; j++) {
+            var href = links[j].getAttribute('href') || '';
+            var m = /^\/([A-Za-z0-9._]{1,30})\/?$/.exec(href);
+            if (!m) { continue; }
+            if (RESERVED.indexOf(m[1].toLowerCase()) >= 0) { continue; }
+            return m[1];
+          }
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    function report() {
+      try {
+        if (!onInbox()) { return; }
+        var name = findOwnUsername();
+        if (!name || name === sent) { return; }
+        var wk = window.webkit;
+        var handler = wk && wk.messageHandlers && wk.messageHandlers.iuOwnUsername;
+        if (handler && typeof handler.postMessage === 'function') {
+          handler.postMessage(String(name));
+          sent = name;
+          if (observer) { observer.disconnect(); observer = null; }
+        }
+      } catch (e) {}
+    }
+
+    function schedule() {
+      try {
+        if (timer) { return; }
+        timer = setTimeout(function() { timer = null; report(); }, 300);
+      } catch (e) {}
+    }
+
+    function wrap(name) {
+      try {
+        var original = window.history && window.history[name];
+        if (typeof original !== 'function') { return; }
+        window.history[name] = function() {
+          var result = original.apply(this, arguments);
+          schedule();
+          return result;
+        };
+      } catch (e) {}
+    }
+
+    try {
+      if (typeof MutationObserver === 'function' && document.body) {
+        observer = new MutationObserver(schedule);
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
+    } catch (e) {}
+    wrap('pushState');
+    wrap('replaceState');
+    window.addEventListener('popstate', schedule);
+    schedule();
+  } catch (e) {}
+})();
+"""#
+
     // MARK: - Grouping
 
     /// Wraps a CSS string (normally `hideChromeCSS`) in a try/catch IIFE that appends it once as a
@@ -460,6 +551,6 @@ html[data-iu-unread-only] [data-iu-read="1"] { display:none !important; }
 
     /// Scripts to inject at document end. `hideChromeCSS` is applied separately into a <style> element.
     public static func documentEnd() -> [String] {
-        [reelLockJS, unreadToggleJS]
+        [reelLockJS, unreadToggleJS, ownProfileJS]
     }
 }

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// App shell: three tabs in a floating pill, login sheet when signed out. One web view is shared and
+/// App shell: four tabs in a floating pill, login sheet when signed out. One web view is shared and
 /// re-pointed per tab through `WebSurfaceController.show(_:)`.
 struct RootView: View {
     @EnvironmentObject private var session: InstagramSession
@@ -8,9 +8,7 @@ struct RootView: View {
     @State private var tab: AppTab = .messages
 
     private var loginRequired: Binding<Bool> {
-        // A full-screen web presentation (story creation) shows Instagram's own pages, login included,
-        // so the sheet must not stack on it; it appears after that closes.
-        Binding(get: { session.authState == .loggedOut && !surface.isPresentedFullScreen }, set: { _ in })
+        Binding(get: { session.authState == .loggedOut }, set: { _ in })
     }
 
     var body: some View {
@@ -51,6 +49,7 @@ struct RootView: View {
         case .messages: MessagesView()
         case .findPeople: FindPeopleView()
         case .you: YouView()
+        case .settings: SettingsView()
         }
     }
 }

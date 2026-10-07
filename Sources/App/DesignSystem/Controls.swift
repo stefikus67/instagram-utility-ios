@@ -61,3 +61,38 @@ struct ValueRow: View {
         }
     }
 }
+
+/// A username text field plus a gold save button. `onSave` returns false when the text is not a valid Instagram
+/// username, which shows an inline message.
+struct UsernameEntry: View {
+    let buttonTitle: String
+    let onSave: (String) -> Bool
+    @State private var draft = ""
+    @State private var invalid = false
+
+    init(buttonTitle: String, onSave: @escaping (String) -> Bool) {
+        self.buttonTitle = buttonTitle
+        self.onSave = onSave
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            TextField("username", text: $draft, prompt: Text("username").foregroundColor(Theme.placeholder))
+                .font(Theme.body)
+                .foregroundStyle(Theme.text)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .padding(.horizontal, Spacing.l)
+                .frame(height: Metrics.inputControl)
+                .background(RoundedRectangle(cornerRadius: Radius.field, style: .continuous).fill(Theme.card))
+                .onChange(of: draft) { _ in invalid = false }
+            Button(buttonTitle) { invalid = !onSave(draft) }
+                .buttonStyle(GoldCapsuleButtonStyle())
+            if invalid {
+                Text("That isn't a valid Instagram username.")
+                    .font(Theme.label)
+                    .foregroundStyle(Theme.text3)
+            }
+        }
+    }
+}

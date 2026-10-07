@@ -92,10 +92,20 @@ final class LayoutTests: XCTestCase {
         XCTAssertEqual(Metrics.iconButton, 36)
         XCTAssertEqual(Metrics.searchHeight, 36)
         XCTAssertEqual(Metrics.inputControl, 40)
+        XCTAssertEqual(Metrics.webNavCover, 56)
         XCTAssertEqual(Metrics.bubbleMaxWidthFraction, 0.75)
         XCTAssertEqual(Metrics.bubblePaddingV, 8)
         XCTAssertEqual(Metrics.bubblePaddingH, 12)
         XCTAssertEqual(Metrics.runGap, 2)
         XCTAssertEqual(Metrics.groupGap, 8)
+    }
+
+    func testFourTabsFitOnSmallestPhone() {
+        // 375pt is the narrowest supported iPhone; each tab needs enough room for "Find people" at 10pt.
+        XCTAssertGreaterThanOrEqual((375 - 2 * Metrics.tabBarSide) / 4, 72)
+    }
+
+    func testWebNavCoverHidesInstagramNav() {
+        XCTAssertGreaterThanOrEqual(Metrics.webNavCover, 50)
     }
 }

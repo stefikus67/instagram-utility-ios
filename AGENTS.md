@@ -3,11 +3,11 @@
 Read this, then the spec: `docs/superpowers/specs/2026-10-05-instagram-utility-v1-design.md` (§A for the website-based pivot).
 
 ## Product
-**Killagram:** a fast native iPhone app for Instagram communication: DMs, stories, story posting, finding people.
+**Killagram:** a fast native iPhone app for Instagram communication: DMs, stories, finding people.
 **No feed, Explore or Reels — the code for them must not exist.** Content is only ever shown from a
 profile the user deliberately opened or something someone sent them.
 
-**Architecture (Milestone 3 onwards):** Instagram's own mobile website inside `WKWebView`, made into a focused product by controlling navigation and presentation. Three native tabs (Messages · Find people · You) each drive the web surface. Search on Find people uses Instagram's own /explore/search/ page for real account suggestions; that is the only Explore sub-route allowed. Story posting works by switching to a desktop user agent (Version/17.0 string) ONLY while the /create/story/ page is open, reverting to mobile everywhere else.
+**Architecture (Milestone 3 onwards):** Instagram's own mobile website inside `WKWebView`, made into a focused product by controlling navigation and presentation. Four native tabs (Messages · Find people · You · Settings): the first three drive the web surface (You shows your own profile), Settings is native. Search on Find people uses Instagram's own /explore/search/ page for real account suggestions; that is the only Explore sub-route allowed. Story posting was dropped in M4 (it never worked reliably); the route policy's create-story rules and the orientation override remain, unused by the UI.
 
 ## Hard rules
 1. €0. No paid Apple program, server, hosting, CI or dependency.
@@ -32,8 +32,7 @@ profile the user deliberately opened or something someone sent them.
 **Techniques** (spec §A):
 - **Route firewall** (NavigationGuard): blocks feed/Explore (except /explore/search/)/Reels/cross-content "next"; allows profiles, search, stories, story creation.
 - **Content rule list** (`WKContentRuleList`): blocks feed/Explore/Reels/ads/tracker requests at the network layer (hard firewall, main speed win).
-- **Injected CSS/JS**: hides Instagram's nav chrome; locks DM-opened reels so they can't scroll to the next; overrides `screen.orientation` for story posting; unread-only inbox toggle (detects Instagram's unread-blue dot).
-- **Desktop user agent for story posting:** switches to desktop UA (Version/17.0 string) ONLY on /create/story/, reverts to mobile everywhere else — works around Instagram's mobile web block on the composer.
+- **Injected CSS/JS**: hides Instagram's nav chrome; locks DM-opened reels so they can't scroll to the next; overrides `screen.orientation` (kept from the dropped story-posting flow); unread-only inbox toggle (detects Instagram's unread-blue dot).
 
 **Confirmed web limits** (permanent, not fixable in a web wrapper): view-once ("tap to view") DM photos/videos are app-only on every Instagram web surface; live in-app camera capture in DMs is app-only (camera-roll send still works).
 
