@@ -17,9 +17,9 @@ final class WebSurfaceController: NSObject, ObservableObject {
         case profile(username: String)
         /// Instagram's own account-search page (/explore/search/): live suggestions, no explore grid.
         case search
-        /// There is no web page for the You tab (it is native settings). Kept so callers have one vocabulary;
-        /// it maps to the inbox because the signed-in username is not known without reading session data.
-        case you
+        /// The signed-in user's own profile. Needs `ownUsername` (auto-detected or typed); `show` does nothing
+        /// until it is known.
+        case ownProfile
     }
 
     /// True once the content rule list has been attached (or its compile failed and we proceed without it,
@@ -31,6 +31,10 @@ final class WebSurfaceController: NSObject, ObservableObject {
     /// because the injected script's state lives in the page and resets with it.
     @Published private(set) var unreadOnly: Bool
     private static let unreadOnlyKey = "iuUnreadOnly"
+    /// The signed-in account's username, read from Instagram's own nav by `InjectedScripts.ownProfileJS`
+    /// (or typed in as a fallback). Persisted so the You tab works straight after relaunch.
+    @Published private(set) var ownUsername: String?
+    private static let ownUsernameKey = "iuOwnUsername"
 
     let webView: WKWebView
     /// Set by the session. While signed out, a blocked "/" is just Instagram's login landing, so the
@@ -46,6 +50,7 @@ final class WebSurfaceController: NSObject, ObservableObject {
 
     init(diagnostics: DiagnosticsStore) {
         unreadOnly = UserDefaults.standard.bool(forKey: Self.unreadOnlyKey)
+        ownUsername = UserDefaults.standard.string(forKey: Self.ownUsernameKey)
         let userContent = WKUserContentController()
         self.userContent = userContent
 
@@ -73,6 +78,9 @@ final class WebSurfaceController: NSObject, ObservableObject {
         let bridge = ScriptBridge()
         bridge.target = self
         userContent.add(bridge, name: Self.blockedMessageName)
+        let ownBridge = OwnUsernameBridge()
+        ownBridge.target = self
+        userContent.add(ownBridge, name: Self.ownUsernameMessageName)
 
         // Compile/attach the firewall right away; loads wait for it (see `load`).
         prepareTask = Task { [weak self] in await self?.attachContentRules() }
@@ -90,7 +98,7 @@ final class WebSurfaceController: NSObject, ObservableObject {
     /// tab switch does not throw away an open conversation; pass `reload` to force it (e.g. "Inbox").
     func show(_ surface: Surface, reload: Bool = false) {
         if !reload, currentSurface == surface { return }
-        guard let url = Self.url(for: surface) else { return }
+        guard let url = self.url(for: surface) else { return }
         currentSurface = surface
         load(url)
     }
@@ -102,8 +110,11 @@ final class WebSurfaceController: NSObject, ObservableObject {
     }
 
     /// Forgets navigation history after a Reset so nothing from the old session is a redirect target.
+    /// Also forgets the detected username: Reset means a possibly different account.
     func resetNavigationState() {
         navigationGuard.reset()
+        ownUsername = nil
+        UserDefaults.standard.removeObject(forKey: Self.ownUsernameKey)
         showLogin()
     }
 
@@ -139,11 +150,24 @@ final class WebSurfaceController: NSObject, ObservableObject {
                                    completionHandler: nil)
     }
 
+    /// Manual fallback for the own-profile username: trims, strips a leading "@", lowercases and validates
+    /// with the route policy. Returns false (and changes nothing) if it is not a valid Instagram username.
+    @discardableResult
+    func setOwnUsername(_ raw: String) -> Bool {
+        var name = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if name.hasPrefix("@") { name.removeFirst() }
+        guard InstagramRoutePolicy.profileURL(username: name) != nil else { return false }
+        ownUsername = name
+        UserDefaults.standard.set(name, forKey: Self.ownUsernameKey)
+        return true
+    }
+
     // MARK: - Surfaces
 
-    private static func url(for surface: Surface) -> URL? {
+    private func url(for surface: Surface) -> URL? {
         switch surface {
-        case .messages, .you: return InstagramRoutePolicy.inboxURL
+        case .messages: return InstagramRoutePolicy.inboxURL
+        case .ownProfile: return ownUsername.flatMap { InstagramRoutePolicy.profileURL(username: $0) }
         case .profile(let username): return InstagramRoutePolicy.profileURL(username: username)
         case .search: return InstagramRoutePolicy.searchURL
         }
@@ -157,6 +181,7 @@ final class WebSurfaceController: NSObject, ObservableObject {
     // MARK: - Content rules
 
     private static let blockedMessageName = "iuBlocked"
+    private static let ownUsernameMessageName = "iuOwnUsername"
 
     private func attachContentRules() async {
         let list = await Self.contentRuleList()
@@ -205,6 +230,13 @@ final class WebSurfaceController: NSObject, ObservableObject {
         guard !isSignedOut() else { return }
         navigationGuard.handleBlockedPath(path)
     }
+
+    // MARK: - iuOwnUsername bridge
+
+    /// Re-detection overwrites the stored name, which handles an account switch.
+    fileprivate func handleOwnUsername(_ name: String) {
+        setOwnUsername(name)
+    }
 }
 
 /// Receives `iuBlocked` posts from the injected route guard. Weak target: WKUserContentController retains
@@ -216,5 +248,16 @@ private final class ScriptBridge: NSObject, WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.frameInfo.isMainFrame, let path = message.body as? String else { return }
         target?.handleBlocked(path: path)
+    }
+}
+
+/// Receives `iuOwnUsername` posts from `InjectedScripts.ownProfileJS`. Weak target, same reason as `ScriptBridge`.
+@MainActor
+private final class OwnUsernameBridge: NSObject, WKScriptMessageHandler {
+    weak var target: WebSurfaceController?
+
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard message.frameInfo.isMainFrame, let name = message.body as? String else { return }
+        target?.handleOwnUsername(name)
     }
 }
