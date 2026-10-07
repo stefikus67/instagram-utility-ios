@@ -1,5 +1,16 @@
 # Handoff — Killagram (Instagram Utility)
 
+## State (2026-10-07 — M4 implemented on branch `m4-profile-settings`, not merged, device-unverified)
+Plan: `docs/superpowers/plans/2026-10-07-m4-profile-settings-palette.md`. Device checklist: `docs/IPHONE_INSTALL.md` §5.
+- **Palette** matches Instagram's dark web theme (bg #0C1014, card #212328, raise #25292E); gold stays the accent.
+- **Story posting removed** (app layer). `InstagramRoutePolicy` create-story rules and `orientationFixJS` are kept, unused by the UI.
+- **You tab = own profile.** The username is auto-detected by `InjectedScripts.ownProfileJS` (inbox only, posts to `iuOwnUsername`),
+  persisted in UserDefaults, with a typed-in fallback. Reset clears it.
+- **Settings is a fourth tab** (gear): Profile (username, change), Diagnostics, Reset.
+- **Find people / You** cover Instagram's bottom nav with an opaque strip (`Metrics.webNavCover` = 56).
+- **New fragile items:** the username detector depends on Instagram's nav markup on /direct/ (links inside `[role=menubar]`/`nav`);
+  the nav cover height (56) may need tuning on device. Both are device-verified only. Needs CI green + device check before merging to main.
+
 ## State (2026-10-06 — M3 shipped)
 **Milestone 3 (Killagram)** shipped with the following enhancements:
 - **Renamed to Killagram** with new gold-camera icon.

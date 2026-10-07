@@ -30,7 +30,14 @@ SideStore → My Apps → **+** → pick the IPA → it signs with your free App
 4. Find people tab → Instagram's search appears → type a name → it suggests accounts as you type → tap one → their profile opens (grid, highlights). Open a post; you can't swipe to a stranger's post.
 5. Open a reel someone sent in a DM → it opens → does NOT scroll to another reel; a post's caption/comments still scroll.
 6. Messages → "Unread only" ON → read chats hide, unread stay. If nothing hides, report it (the marker may have changed). Relaunch → toggle still on.
-7. You → Post a story → it opens the upload/crop screen (NOT the inbox) → pick a photo → post (delete after). Close returns to Messages.
-8. You → Reset Instagram Session → login returns.
+7. ~~You → Post a story~~ — obsolete: story posting was removed in M4.
+8. Settings → Reset Instagram Session → login returns (the You tab was Reset's home before M4).
 
 KNOWN APP-ONLY LIMITS (not bugs): view-once "tap to view" DM photos/videos won't open (Instagram locks them to its app); there's no in-DM live camera (send from camera roll instead).
+
+## 5. Milestone 4 device checklist (on the iPhone)
+1. The app background is Instagram's dark navy; no colour seam between our title bars and Instagram's pages.
+2. Find people: none of Instagram's bottom buttons (home/search/reels/profile) are visible or tappable.
+3. Open Messages once, then You → your own Instagram profile opens (no story button anywhere).
+4. Settings tab shows your @username, Diagnostics and Reset.
+5. After Reset + login, You re-detects your username (open Messages once first).
