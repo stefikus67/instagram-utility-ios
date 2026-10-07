@@ -18,6 +18,7 @@ struct FindPeopleView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 WebSurface()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .coversInstagramNav()
             }
             // Reload: tapping a result navigates the shared web view to a profile while the surface stays .search,
             // so a plain show(.search) would be skipped as already-current and return to that profile.

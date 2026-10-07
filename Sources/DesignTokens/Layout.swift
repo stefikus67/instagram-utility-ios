@@ -63,6 +63,11 @@ public enum Metrics {
     public static let searchHeight: Double = 36
     public static let inputControl: Double = 40
 
+    // Instagram web chrome
+    /// Height of the opaque strip laid over Instagram's own bottom nav (~50pt plus its hairline). A few points
+    /// of over-cover are harmless: Instagram pads its content for its own bar.
+    public static let webNavCover: Double = 56
+
     // Chat bubbles (used from milestone 2)
     public static let bubbleMaxWidthFraction: Double = 0.75
     public static let bubblePaddingV: Double = Spacing.s

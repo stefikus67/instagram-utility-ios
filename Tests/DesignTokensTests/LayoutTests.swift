@@ -92,10 +92,15 @@ final class LayoutTests: XCTestCase {
         XCTAssertEqual(Metrics.iconButton, 36)
         XCTAssertEqual(Metrics.searchHeight, 36)
         XCTAssertEqual(Metrics.inputControl, 40)
+        XCTAssertEqual(Metrics.webNavCover, 56)
         XCTAssertEqual(Metrics.bubbleMaxWidthFraction, 0.75)
         XCTAssertEqual(Metrics.bubblePaddingV, 8)
         XCTAssertEqual(Metrics.bubblePaddingH, 12)
         XCTAssertEqual(Metrics.runGap, 2)
         XCTAssertEqual(Metrics.groupGap, 8)
+    }
+
+    func testWebNavCoverHidesInstagramNav() {
+        XCTAssertGreaterThanOrEqual(Metrics.webNavCover, 50)
     }
 }
