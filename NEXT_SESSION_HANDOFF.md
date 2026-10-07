@@ -1,6 +1,6 @@
 # Handoff — Killagram (Instagram Utility)
 
-## M5 (2026-10-07): unread-only toggle removed (owner: did not work on device, not needed). M4 device-tested OK and merged to main (username had to be typed — auto-detect missed; owner fine with that).
+## M5 (2026-10-07): own-account pages allowed (edit profile, settings /accounts/*, /archive/, /your_activity/; logout + signup stay blocked); unread-only toggle removed (owner: did not work on device, not needed). M4 device-tested OK and merged to main (username had to be typed — auto-detect missed; owner fine with that).
 
 ## State (2026-10-07 — M4 implemented on branch `m4-profile-settings`, not merged, device-unverified)
 **M4 CI green:** run 37608770201, artifact `InstagramUtility-unsigned-ipa` (257,812 bytes): https://github.com/stefikus67/instagram-utility-ios/actions/runs/37608770201

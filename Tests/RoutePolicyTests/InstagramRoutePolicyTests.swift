@@ -72,6 +72,26 @@ final class InstagramRoutePolicyTests: XCTestCase {
         XCTAssertEqual(c("https://www.instagram.com/accounts/"), .blocked)
     }
 
+    // M5: own-account pages (edit profile, settings, archive, your activity)
+    func testOwnAccountPagesAllowed() {
+        XCTAssertEqual(c("https://www.instagram.com/accounts/edit/"), .settingsAllowed)
+        XCTAssertEqual(c("https://www.instagram.com/accounts/privacy_and_security/"), .settingsAllowed)
+        XCTAssertEqual(c("https://www.instagram.com/accounts/notifications/"), .settingsAllowed)
+        XCTAssertEqual(c("https://www.instagram.com/archive/stories/"), .settingsAllowed)
+        XCTAssertEqual(c("https://www.instagram.com/your_activity/interactions/likes/"), .settingsAllowed)
+        // Auth pages keep winning over settings.
+        XCTAssertEqual(c("https://www.instagram.com/accounts/login/"), .authAllowed)
+    }
+
+    func testOwnAccountPagesAreValidMediaSources() {
+        XCTAssertEqual(c("https://www.instagram.com/p/ABC123/", from: "https://www.instagram.com/archive/stories/"), .mediaAllowed)
+    }
+
+    func testArchiveAndActivityAreNotUsernames() {
+        XCTAssertNil(InstagramRoutePolicy.profileURL(username: "archive"))
+        XCTAssertNil(InstagramRoutePolicy.profileURL(username: "your_activity"))
+    }
+
     // M2: profiles
     func testProfileAllowed() {
         XCTAssertEqual(c("https://www.instagram.com/someone/"), .profileAllowed)
@@ -203,6 +223,7 @@ final class InstagramRoutePolicyTests: XCTestCase {
         XCTAssertTrue(RouteCategory.createAllowed.isAllowedInApp)
         XCTAssertTrue(RouteCategory.mediaAllowed.isAllowedInApp)
         XCTAssertTrue(RouteCategory.searchAllowed.isAllowedInApp)
+        XCTAssertTrue(RouteCategory.settingsAllowed.isAllowedInApp)
         XCTAssertFalse(RouteCategory.blocked.isAllowedInApp)
         XCTAssertFalse(RouteCategory.external.isAllowedInApp)
     }

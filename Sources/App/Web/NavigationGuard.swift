@@ -113,7 +113,7 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
 
         let category = InstagramRoutePolicy.classify(url, from: lastAllowedURL)
         switch category {
-        case .authAllowed, .directAllowed, .profileAllowed, .storiesAllowed, .createAllowed, .mediaAllowed, .searchAllowed:
+        case .authAllowed, .directAllowed, .profileAllowed, .storiesAllowed, .createAllowed, .mediaAllowed, .searchAllowed, .settingsAllowed:
             record(url, category)
             decisionHandler(.allow)
         case .blocked:
