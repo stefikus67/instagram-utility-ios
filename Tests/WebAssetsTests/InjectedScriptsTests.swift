@@ -24,7 +24,7 @@ final class InjectedScriptsTests: XCTestCase {
     }
     func testNoTokenOrCredentialAccess() {
         // Guardrail: injected JS must not touch cookies, localStorage auth, or fb_dtsg.
-        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.unreadToggleJS, InjectedScripts.hideChromeCSS] {
+        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.unreadToggleJS, InjectedScripts.ownProfileJS, InjectedScripts.hideChromeCSS] {
             for banned in ["document.cookie", "fb_dtsg", "sessionid", "localStorage", "XMLHttpRequest", "fetch("] {
                 XCTAssertFalse(js.contains(banned), "injected asset must not reference \(banned)")
             }
