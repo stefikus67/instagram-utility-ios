@@ -7,7 +7,7 @@ Read this, then the spec: `docs/superpowers/specs/2026-10-05-instagram-utility-v
 **No feed, Explore or Reels — the code for them must not exist.** Content is only ever shown from a
 profile the user deliberately opened or something someone sent them.
 
-**Architecture (Milestone 3 onwards):** Instagram's own mobile website inside `WKWebView`, made into a focused product by controlling navigation and presentation. Four native tabs (Messages · Find people · You · Settings): the first three drive the web surface (You shows your own profile), Settings is native. Search on Find people uses Instagram's own /explore/search/ page for real account suggestions; that is the only Explore sub-route allowed. Story posting was dropped in M4 (it never worked reliably); the route policy's create-story rules and the orientation override remain, unused by the UI.
+**Architecture (Milestone 3 onwards):** Instagram's own mobile website inside `WKWebView`, made into a focused product by controlling navigation and presentation. Four native tabs (Messages · Find people · You · Settings): the first three drive the web surface (You shows your own profile), Settings is native. Search on Find people uses Instagram's own /explore/search/ page for real account suggestions; that is the only Explore sub-route allowed. Story posting returned in M6 as **composer mode**: the You tab's + opens a full-screen cover where Instagram's home page is allowed ONLY while the cover is open (feed hidden by CSS, `NavigationGuard.composerMode`); injected JS taps Instagram's own + (`aria-label="New post"`), the user picks Story and posts in Instagram's UI. Fragile: that aria-label and the feed selectors. The home route stays blocked everywhere else.
 
 ## Hard rules
 1. €0. No paid Apple program, server, hosting, CI or dependency.
@@ -16,7 +16,7 @@ profile the user deliberately opened or something someone sent them.
 4. Never log, display or commit cookies, session ids, tokens or user data. Fixtures use fake names.
 5. Every colour/size in native views comes from `Theme` / `Spacing` / `Metrics` / `Radius` / `TypeScale`.
    No raw numbers or hex in views. Token tests fail the build if the system drifts.
-6. **Injected JS safety (enforced by guardrail test):** Injected JavaScript may only hide/navigate/scroll/set CSS classes/override `screen.orientation`. Never read cookies/tokens, never fetch/XHR, never access IG's data structures. Injected JS is defensive and device-verified only; behaviour is not CI-tested.
+6. **Injected JS safety (enforced by guardrail test):** Injected JavaScript may only hide/navigate/scroll/set CSS classes/override `screen.orientation`, read a nav link's `href` (own username), and — only when native asks, in story-composer mode — click Instagram's own + ("New post") button once. Never read cookies/tokens, never fetch/XHR, never access IG's data structures. Injected JS is defensive and device-verified only; behaviour is not CI-tested.
 
 ## Where things go
 | Concern | Location |
@@ -30,7 +30,7 @@ profile the user deliberately opened or something someone sent them.
 | App shell and tabs | `Sources/App/App/RootView.swift`, `DesignSystem/PillTabBar.swift` |
 
 **Techniques** (spec §A):
-- **Route firewall** (NavigationGuard): blocks feed/Explore (except /explore/search/)/Reels/cross-content "next"; allows profiles, search, stories, story creation.
+- **Route firewall** (NavigationGuard): blocks feed/Explore (except /explore/search/)/Reels/cross-content "next"; allows profiles, search, stories, story creation (home only in composer mode).
 - **Content rule list** (`WKContentRuleList`): blocks feed/Explore/Reels/ads/tracker requests at the network layer (hard firewall, main speed win).
 - **Injected CSS/JS**: hides Instagram's nav chrome; locks DM-opened reels so they can't scroll to the next; overrides `screen.orientation` (kept from the dropped story-posting flow).
 
@@ -42,4 +42,4 @@ profile the user deliberately opened or something someone sent them.
 - SwiftUI native screens have no unit tests. **Injected JS behaviour is device-verified only** (Milestone 2 device checklist, not CI-verified). CI verifies: design tokens, content rules grammar, guardrail tests (JS safety).
 
 ## Current state
-Milestone 3 (Killagram, M3) shipped. Device checklist (`docs/IPHONE_INSTALL.md` §4) is the acceptance gate.
+Milestone 3 (Killagram, M3) shipped; M6 (story composer) implemented, device checklist `docs/IPHONE_INSTALL.md` §6. Device checklist (`docs/IPHONE_INSTALL.md` §4) is the acceptance gate.

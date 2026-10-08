@@ -38,6 +38,15 @@ enum InstagramRoutePolicy {
 
     static let createStoryURL = URL(string: "https://www.instagram.com/create/story/")!
     static let searchURL = URL(string: "https://www.instagram.com/explore/search/")!
+    /// Instagram's home page (the feed). `classify` keeps it `.blocked`; only the story composer overrides that.
+    static let homeURL = URL(string: "https://www.instagram.com/")!
+
+    /// True for Instagram's home page: an Instagram host and no path segments (query ignored).
+    static func isHome(_ url: URL) -> Bool {
+        guard let scheme = url.scheme?.lowercased(), scheme == "https" || scheme == "http",
+              let host = url.host?.lowercased(), instagramHosts.contains(host) else { return false }
+        return segments(of: url).isEmpty
+    }
 
     /// The profile page for an exact username, or nil when the text is not a plausible username or the
     /// resulting route would not be a profile the policy allows (e.g. "explore", "direct").

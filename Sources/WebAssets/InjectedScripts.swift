@@ -8,6 +8,8 @@ import Foundation
 ///   scroll/navigation events, overrides screen.orientation, toggles an attribute, posts a path string
 ///   to the native `iuBlocked` message handler, and posts the signed-in username (read from one nav
 ///   link's href) to the native `iuOwnUsername` handler.
+/// - The one exception to "never acts on the page": `composerJS` clicks Instagram's own "New post" button once,
+///   and only after native code asked for it while the story composer is open.
 /// - No polling. Route changes are caught by patching history.pushState/replaceState and listening to popstate.
 /// - Every DOM lookup is null-guarded.
 ///
@@ -21,6 +23,9 @@ public enum InjectedScripts {
     public static let hideChromeCSS: String = #"""
 /* Bottom tab bar */
 div[role="menubar"] { display:none !important; }
+/* Story composer (home page opened only while the composer is up): hide the feed, keep the top bar and stories row */
+html[data-iu-composer] main article { visibility:hidden !important; }
+html[data-iu-composer] main [role="feed"] { visibility:hidden !important; }
 /* Feed / Explore / Reels affordances */
 :is(nav, [role="navigation"], [role="menubar"]) a[href="/"],
 :is(nav, [role="navigation"], [role="menubar"]) a[href="/explore"],
@@ -349,6 +354,118 @@ div[role="menubar"] { display:none !important; }
 })();
 """#
 
+    /// Story composer support. Does nothing until native calls `window.__iuStartComposer()` (only while the
+    /// composer cover is open). Then, on the home page only: sets `data-iu-composer` on <html> (CSS hides the
+    /// feed), clicks Instagram's own "New post" (+) button once, and reports `opened` or `notfound` to the native
+    /// `iuComposer` handler. A debounced MutationObserver waits for the button; it gives up after 10 s (one
+    /// timer, no polling). The attribute follows the route (set only while active and on `/`). Document-end.
+    public static let composerJS: String = #"""
+(function(){
+  try {
+    if (window.__iuComposerInstalled) { return; }
+    window.__iuComposerInstalled = true;
+
+    var active = false;
+    var clicked = false;
+    var observer = null;
+    var debounce = null;
+    var giveUp = null;
+
+    function onHome() {
+      try { return ((window.location && window.location.pathname) || '') === '/'; }
+      catch (e) { return false; }
+    }
+
+    function post(message) {
+      try {
+        var wk = window.webkit;
+        var handler = wk && wk.messageHandlers && wk.messageHandlers.iuComposer;
+        if (handler && typeof handler.postMessage === 'function') { handler.postMessage(String(message)); }
+      } catch (e) {}
+    }
+
+    function applyAttribute() {
+      try {
+        var root = document.documentElement;
+        if (!root) { return; }
+        if (active && onHome()) { root.setAttribute('data-iu-composer', ''); }
+        else { root.removeAttribute('data-iu-composer'); }
+      } catch (e) {}
+    }
+
+    function stopWaiting() {
+      try {
+        if (observer) { observer.disconnect(); observer = null; }
+        if (debounce) { clearTimeout(debounce); debounce = null; }
+        if (giveUp) { clearTimeout(giveUp); giveUp = null; }
+      } catch (e) {}
+    }
+
+    function findPlus() {
+      try {
+        var icon = document.querySelector('svg[aria-label="New post"]');
+        if (!icon || typeof icon.closest !== 'function') { return null; }
+        return icon.closest('a,[role="button"],button');
+      } catch (e) { return null; }
+    }
+
+    function attempt() {
+      try {
+        if (!active || clicked || !onHome()) { return; }
+        var plus = findPlus();
+        if (!plus) { return; }
+        clicked = true;
+        stopWaiting();
+        plus.click();
+        post('opened');
+      } catch (e) {}
+    }
+
+    function schedule() {
+      try {
+        if (debounce || clicked) { return; }
+        debounce = setTimeout(function() { debounce = null; attempt(); }, 150);
+      } catch (e) {}
+    }
+
+    window.__iuStartComposer = function() {
+      try {
+        if (!onHome()) { return; }
+        active = true;
+        applyAttribute();
+        if (clicked || observer) { return; }
+        attempt();
+        if (clicked) { return; }
+        if (typeof MutationObserver === 'function' && document.body) {
+          observer = new MutationObserver(schedule);
+          observer.observe(document.body, { childList: true, subtree: true });
+        }
+        giveUp = setTimeout(function() {
+          giveUp = null;
+          if (!clicked) { stopWaiting(); post('notfound'); }
+        }, 10000);
+      } catch (e) {}
+    };
+
+    function wrap(name) {
+      try {
+        var original = window.history && window.history[name];
+        if (typeof original !== 'function') { return; }
+        window.history[name] = function() {
+          var result = original.apply(this, arguments);
+          applyAttribute();
+          return result;
+        };
+      } catch (e) {}
+    }
+
+    wrap('pushState');
+    wrap('replaceState');
+    window.addEventListener('popstate', applyAttribute);
+  } catch (e) {}
+})();
+"""#
+
     // MARK: - Grouping
 
     /// Wraps a CSS string (normally `hideChromeCSS`) in a try/catch IIFE that appends it once as a
@@ -368,6 +485,6 @@ div[role="menubar"] { display:none !important; }
 
     /// Scripts to inject at document end. `hideChromeCSS` is applied separately into a <style> element.
     public static func documentEnd() -> [String] {
-        [reelLockJS, ownProfileJS]
+        [reelLockJS, ownProfileJS, composerJS]
     }
 }

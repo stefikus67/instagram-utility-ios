@@ -41,3 +41,10 @@ KNOWN APP-ONLY LIMITS (not bugs): view-once "tap to view" DM photos/videos won't
 3. Open Messages once, then You → your own Instagram profile opens (no story button anywhere).
 4. Settings tab shows your @username, Diagnostics and Reset.
 5. After Reset + login, You re-detects your username (open Messages once first).
+
+## 6. Milestone 6 device checklist (on the iPhone)
+1. You → tap + (top right of the header) → Instagram's home page opens with **no feed visible** and its New post / Story menu opens by itself. If it does not, a "Tap + at the top, then Story." hint shows; tap Instagram's + yourself.
+2. Pick **Story** → Instagram's composer opens (you are not bounced to Messages or Find people).
+3. Pick a photo, add text, share → the cover closes and Messages shows.
+4. X closes the cover at any point, and the feed is never reachable (Instagram's Home/Reels taps bounce).
+5. Settings → Diagnostics "Blocked navigations" still counts feed attempts outside the composer.

@@ -11,9 +11,10 @@ final class InjectedScriptsTests: XCTestCase {
         XCTAssertFalse(InjectedScripts.reelLockJS.isEmpty)
         XCTAssertFalse(InjectedScripts.orientationFixJS.isEmpty)
         XCTAssertFalse(InjectedScripts.ownProfileJS.isEmpty)
+        XCTAssertFalse(InjectedScripts.composerJS.isEmpty)
     }
     func testJSIsDefensivelyWrapped() {
-        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.ownProfileJS] {
+        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.ownProfileJS, InjectedScripts.composerJS] {
             XCTAssertTrue(js.contains("try"), "JS must be wrapped in try/catch")
             XCTAssertTrue(js.contains("(function"), "JS must be an IIFE to avoid polluting globals")
         }
@@ -35,14 +36,14 @@ final class InjectedScriptsTests: XCTestCase {
 
     // Additional guardrails beyond the brief.
     func testJSEndsAsInvokedIIFE() {
-        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.ownProfileJS] {
+        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.ownProfileJS, InjectedScripts.composerJS] {
             XCTAssertTrue(js.hasPrefix("(function"), "JS must start with an IIFE")
             XCTAssertTrue(js.hasSuffix("})();"), "JS must end with an invoked IIFE")
             XCTAssertTrue(js.contains("catch"), "JS must contain a catch")
         }
     }
     func testNoPolling() {
-        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.ownProfileJS] {
+        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.ownProfileJS, InjectedScripts.composerJS] {
             XCTAssertFalse(js.contains("setInterval"), "no polling allowed")
         }
     }
@@ -77,6 +78,25 @@ final class InjectedScriptsTests: XCTestCase {
         XCTAssertTrue(js.contains("menubar"))
         for banned in ["cookie", "localStorage", "fetch("] {
             XCTAssertFalse(js.contains(banned), "own-profile script must not reference \(banned)")
+        }
+    }
+    func testComposerScriptClicksOnlyNewPostAndReportsToItsHandler() {
+        let js = InjectedScripts.composerJS
+        for needed in ["New post", "iuComposer", "data-iu-composer", "MutationObserver", "__iuStartComposer", "'opened'", "'notfound'"] {
+            XCTAssertTrue(js.contains(needed), "composer script must contain \(needed)")
+        }
+        for banned in ["fetch(", "cookie", "localStorage", "XMLHttpRequest", "location.href", "location.assign", "location.replace"] {
+            XCTAssertFalse(js.contains(banned), "composer script must not reference \(banned)")
+        }
+        XCTAssertEqual(js.components(separatedBy: ".click()").count - 1, 1, "exactly one click, on the + button")
+        XCTAssertEqual(js.components(separatedBy: "setTimeout(").count - 1, 2, "debounce and give-up timers only")
+    }
+    func testComposerCSSOnlyHidesFeedUnderComposerAttribute() {
+        let rules = InjectedScripts.hideChromeCSS.components(separatedBy: "\n").filter { $0.contains("data-iu-composer") && !$0.hasPrefix("/*") }
+        XCTAssertEqual(rules.count, 2)
+        for rule in rules {
+            XCTAssertTrue(rule.hasPrefix("html[data-iu-composer] main "), "unscoped composer rule: \(rule)")
+            XCTAssertTrue(rule.contains("visibility:hidden !important"))
         }
     }
     func testChromeCSSIsHideOnly() {
@@ -136,6 +156,6 @@ final class InjectedScriptsTests: XCTestCase {
 
     func testStartAndEndGroupings() {
         XCTAssertEqual(InjectedScripts.documentStart(), [InjectedScripts.orientationFixJS, InjectedScripts.routeGuardJS])
-        XCTAssertEqual(InjectedScripts.documentEnd(), [InjectedScripts.reelLockJS, InjectedScripts.ownProfileJS])
+        XCTAssertEqual(InjectedScripts.documentEnd(), [InjectedScripts.reelLockJS, InjectedScripts.ownProfileJS, InjectedScripts.composerJS])
     }
 }
