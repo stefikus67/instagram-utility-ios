@@ -10,11 +10,10 @@ final class InjectedScriptsTests: XCTestCase {
         XCTAssertFalse(InjectedScripts.routeGuardJS.isEmpty)
         XCTAssertFalse(InjectedScripts.reelLockJS.isEmpty)
         XCTAssertFalse(InjectedScripts.orientationFixJS.isEmpty)
-        XCTAssertFalse(InjectedScripts.unreadToggleJS.isEmpty)
         XCTAssertFalse(InjectedScripts.ownProfileJS.isEmpty)
     }
     func testJSIsDefensivelyWrapped() {
-        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.unreadToggleJS, InjectedScripts.ownProfileJS] {
+        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.ownProfileJS] {
             XCTAssertTrue(js.contains("try"), "JS must be wrapped in try/catch")
             XCTAssertTrue(js.contains("(function"), "JS must be an IIFE to avoid polluting globals")
         }
@@ -24,7 +23,7 @@ final class InjectedScriptsTests: XCTestCase {
     }
     func testNoTokenOrCredentialAccess() {
         // Guardrail: injected JS must not touch cookies, localStorage auth, or fb_dtsg.
-        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.unreadToggleJS, InjectedScripts.ownProfileJS, InjectedScripts.hideChromeCSS] {
+        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.ownProfileJS, InjectedScripts.hideChromeCSS] {
             for banned in ["document.cookie", "fb_dtsg", "sessionid", "localStorage", "XMLHttpRequest", "fetch("] {
                 XCTAssertFalse(js.contains(banned), "injected asset must not reference \(banned)")
             }
@@ -36,14 +35,14 @@ final class InjectedScriptsTests: XCTestCase {
 
     // Additional guardrails beyond the brief.
     func testJSEndsAsInvokedIIFE() {
-        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.unreadToggleJS, InjectedScripts.ownProfileJS] {
+        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.ownProfileJS] {
             XCTAssertTrue(js.hasPrefix("(function"), "JS must start with an IIFE")
             XCTAssertTrue(js.hasSuffix("})();"), "JS must end with an invoked IIFE")
             XCTAssertTrue(js.contains("catch"), "JS must contain a catch")
         }
     }
     func testNoPolling() {
-        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.unreadToggleJS, InjectedScripts.ownProfileJS] {
+        for js in [InjectedScripts.routeGuardJS, InjectedScripts.reelLockJS, InjectedScripts.orientationFixJS, InjectedScripts.ownProfileJS] {
             XCTAssertFalse(js.contains("setInterval"), "no polling allowed")
         }
     }
@@ -70,18 +69,6 @@ final class InjectedScriptsTests: XCTestCase {
         XCTAssertTrue(js.contains("dialog"), "dialogs (comment drawer) must be exempt")
         XCTAssertTrue(js.contains("scrollHeight"), "scrollable content must be exempt")
         XCTAssertTrue(js.contains("touches.length > 1"), "multi-touch (pinch-zoom) must pass through")
-    }
-    func testUnreadToggleExposesSetterAndAttribute() {
-        XCTAssertTrue(InjectedScripts.unreadToggleJS.contains("__iuSetUnreadOnly"))
-        XCTAssertTrue(InjectedScripts.unreadToggleJS.contains("data-iu-unread-only"))
-        XCTAssertTrue(InjectedScripts.hideChromeCSS.contains("data-iu-unread-only"))
-    }
-    func testUnreadToggleUsesUnreadBlueSignalAndNeverHidesUnread() {
-        let js = InjectedScripts.unreadToggleJS
-        XCTAssertTrue(js.contains("74") && js.contains("93") && js.contains("249"), "must match unread-blue rgb(74,93,249)")
-        XCTAssertTrue(js.contains("getComputedStyle"))
-        XCTAssertTrue(js.contains("data-iu-read"))
-        XCTAssertTrue(js.contains("unreadRows.length === 0"), "must do nothing when no unread row is identified")
     }
     func testOwnProfileScriptReadsOnlyNavHrefOnInbox() {
         let js = InjectedScripts.ownProfileJS
@@ -149,6 +136,6 @@ final class InjectedScriptsTests: XCTestCase {
 
     func testStartAndEndGroupings() {
         XCTAssertEqual(InjectedScripts.documentStart(), [InjectedScripts.orientationFixJS, InjectedScripts.routeGuardJS])
-        XCTAssertEqual(InjectedScripts.documentEnd(), [InjectedScripts.reelLockJS, InjectedScripts.unreadToggleJS, InjectedScripts.ownProfileJS])
+        XCTAssertEqual(InjectedScripts.documentEnd(), [InjectedScripts.reelLockJS, InjectedScripts.ownProfileJS])
     }
 }

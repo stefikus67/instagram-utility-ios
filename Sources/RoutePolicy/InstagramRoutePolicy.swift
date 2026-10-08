@@ -9,13 +9,15 @@ enum RouteCategory: String, Equatable, CaseIterable {
     case createAllowed = "CREATE_ALLOWED"
     case mediaAllowed = "MEDIA_ALLOWED"
     case searchAllowed = "SEARCH_ALLOWED"
+    /// Your own account pages: edit profile, settings, archive, your activity.
+    case settingsAllowed = "SETTINGS_ALLOWED"
     case blocked = "BLOCKED"
     case external = "EXTERNAL"
 
     /// True when the URL may be shown inside the in-app web view.
     var isAllowedInApp: Bool {
         switch self {
-        case .authAllowed, .directAllowed, .profileAllowed, .storiesAllowed, .createAllowed, .mediaAllowed, .searchAllowed: return true
+        case .authAllowed, .directAllowed, .profileAllowed, .storiesAllowed, .createAllowed, .mediaAllowed, .searchAllowed, .settingsAllowed: return true
         case .blocked, .external: return false
         }
     }
@@ -71,6 +73,7 @@ enum InstagramRoutePolicy {
 
         if first == "direct" { return .directAllowed }
         if isAuthPath(segs) { return .authAllowed }
+        if isSettingsPath(segs) { return .settingsAllowed }
         if first == "create" { return .createAllowed }
         if first == "stories" { return .storiesAllowed }
         if first == "explore" {
@@ -82,7 +85,7 @@ enum InstagramRoutePolicy {
         if isMediaPath(segs) {
             guard let source = source else { return .blocked }
             let src = classify(source)
-            let validSource: Set<RouteCategory> = [.directAllowed, .profileAllowed, .storiesAllowed]
+            let validSource: Set<RouteCategory> = [.directAllowed, .profileAllowed, .storiesAllowed, .settingsAllowed]
             if validSource.contains(src) { return .mediaAllowed }
             if isMediaPath(segments(of: source)), sameRoute(source, url) { return .mediaAllowed }
             return .blocked
@@ -111,7 +114,7 @@ enum InstagramRoutePolicy {
     private static let reservedFirstSegments: Set<String> = [
         "explore", "reels", "direct", "accounts", "stories", "p", "reel", "tv",
         "create", "challenge", "auth_platform", "consent", "privacy",
-        "notifications", "emails", "settings", "api", "graphql", "ajax",
+        "notifications", "emails", "settings", "api", "graphql", "ajax", "archive", "your_activity",
     ]
     private static let profileSubpages: Set<String> = ["reels", "tagged", "saved", "feed"]
 
@@ -121,6 +124,16 @@ enum InstagramRoutePolicy {
         if segs.count == 1 { return true }
         if segs.count == 2 { return profileSubpages.contains(segs[1]) }
         return false
+    }
+
+    /// Own-account pages, reached from your profile: /accounts/<page>/ (edit, settings, privacy...), /archive/...,
+    /// /your_activity/... Bare /accounts/, sign-up and logout stay blocked (sign out is Settings → Reset).
+    private static let settingsTopLevel: Set<String> = ["archive", "your_activity"]
+    private static let accountsBlocked: Set<String> = ["emailsignup", "logout"]
+    private static func isSettingsPath(_ segs: [String]) -> Bool {
+        guard let first = segs.first else { return false }
+        if first == "accounts" { return segs.count > 1 && !accountsBlocked.contains(segs[1]) }
+        return settingsTopLevel.contains(first)
     }
 
     private static func isAuthPath(_ segs: [String]) -> Bool {

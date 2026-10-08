@@ -27,10 +27,6 @@ final class WebSurfaceController: NSObject, ObservableObject {
     @Published private(set) var isReady = false
     /// Whether the network-level firewall is actually active. Shown in Settings diagnostics.
     @Published private(set) var contentRulesActive = false
-    /// The inbox's "Unread only" filter. Persisted so it survives relaunch; re-applied after every page load
-    /// because the injected script's state lives in the page and resets with it.
-    @Published private(set) var unreadOnly: Bool
-    private static let unreadOnlyKey = "iuUnreadOnly"
     /// The signed-in account's username, read from Instagram's own nav by `InjectedScripts.ownProfileJS`
     /// (or typed in as a fallback). Persisted so the You tab works straight after relaunch.
     @Published private(set) var ownUsername: String?
@@ -49,7 +45,6 @@ final class WebSurfaceController: NSObject, ObservableObject {
     private var prepareTask: Task<Void, Never>?
 
     init(diagnostics: DiagnosticsStore) {
-        unreadOnly = UserDefaults.standard.bool(forKey: Self.unreadOnlyKey)
         ownUsername = UserDefaults.standard.string(forKey: Self.ownUsernameKey)
         let userContent = WKUserContentController()
         self.userContent = userContent
@@ -70,8 +65,6 @@ final class WebSurfaceController: NSObject, ObservableObject {
         super.init()
 
         navigationGuard = NavigationGuard(webView: webView, diagnostics: diagnostics) { [weak self] in
-            // A fresh document has lost the filter state; put the persisted choice back first.
-            self?.reapplyUnreadOnly()
             self?.onPageFinished()
         }
         installScripts()
@@ -128,26 +121,6 @@ final class WebSurfaceController: NSObject, ObservableObject {
         webView.pauseAllMediaPlayback(completionHandler: nil)
         webView.setMicrophoneCaptureState(.none, completionHandler: nil)
         webView.setCameraCaptureState(.none, completionHandler: nil)
-    }
-
-    /// Toggles the inbox's unread-only filter (script exposed by InjectedScripts.unreadToggleJS) and
-    /// remembers the choice across launches.
-    func setUnreadOnly(_ on: Bool) {
-        unreadOnly = on
-        UserDefaults.standard.set(on, forKey: Self.unreadOnlyKey)
-        applyUnreadOnly(on)
-    }
-
-    /// Re-sends the persisted choice to the current page (a no-op while the filter is off, which is the
-    /// state of every freshly loaded page).
-    func reapplyUnreadOnly() {
-        guard unreadOnly else { return }
-        applyUnreadOnly(true)
-    }
-
-    private func applyUnreadOnly(_ on: Bool) {
-        webView.evaluateJavaScript("window.__iuSetUnreadOnly && window.__iuSetUnreadOnly(\(on ? "true" : "false"));",
-                                   completionHandler: nil)
     }
 
     /// Manual fallback for the own-profile username: trims, strips a leading "@", lowercases and validates

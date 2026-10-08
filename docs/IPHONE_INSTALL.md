@@ -29,7 +29,7 @@ SideStore → My Apps → **+** → pick the IPA → it signs with your free App
 3. Try to reach Home / Explore / Reels — each bounces back; Diagnostics "Blocked navigations" goes up.
 4. Find people tab → Instagram's search appears → type a name → it suggests accounts as you type → tap one → their profile opens (grid, highlights). Open a post; you can't swipe to a stranger's post.
 5. Open a reel someone sent in a DM → it opens → does NOT scroll to another reel; a post's caption/comments still scroll.
-6. Messages → "Unread only" ON → read chats hide, unread stay. If nothing hides, report it (the marker may have changed). Relaunch → toggle still on.
+6. ~~Unread only toggle~~ — removed in M5 (owner: did not work, not needed).
 7. ~~You → Post a story~~ — obsolete: story posting was removed in M4.
 8. Settings → Reset Instagram Session → login returns (the You tab was Reset's home before M4).
 
