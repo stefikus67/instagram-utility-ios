@@ -1,0 +1,12 @@
+{
+  "name": "killtube",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shorts-free, search-only YouTube userscript for iPhone Safari (Userscripts app).",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
