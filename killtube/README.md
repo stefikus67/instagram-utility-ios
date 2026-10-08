@@ -59,3 +59,14 @@ npm test        # node --test, built-in test runner, no dependencies
 
 Rules the tests enforce: no network calls, no cookie or storage access, no timers that poll, everything inside
 try/catch, comments and the player are never hidden, redirects never loop.
+
+## Troubleshooting: "nothing changed"
+1. **Version**: you need 1.0.1 or newer. 1.0.0 injected into the page context, which YouTube's security policy
+   (Trusted Types) blocks, so the script never ran. Reinstall from the raw URL above.
+2. **File name**: in Files → your Userscripts folder the file must be `killtube.user.js` — not
+   `killtube.user.js.txt` (Safari sometimes adds `.txt` when downloading). Rename it if so.
+3. **Extension on**: Settings → Apps → Safari → Extensions → Userscripts → On, and "youtube.com" (or All Websites)
+   set to **Allow**.
+4. **Script on**: in Safari on youtube.com tap **aA** (or the puzzle icon) → Userscripts. It should list *Killtube*
+   with its switch on. If Userscripts says the folder is not set, open the Userscripts app and pick the folder again.
+5. Reload the YouTube tab (pull down) after any change.

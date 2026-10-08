@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         Killtube
 // @description  Shorts-free, search-only YouTube. No Up next, no autoplay chains.
-// @version      1.0.0
+// @version      1.0.1
 // @match        *://m.youtube.com/*
 // @match        *://www.youtube.com/*
 // @match        *://youtube.com/*
 // @run-at       document-start
-// @inject-into  page
+// @inject-into  content
 // @grant        none
 // ==/UserScript==
 
