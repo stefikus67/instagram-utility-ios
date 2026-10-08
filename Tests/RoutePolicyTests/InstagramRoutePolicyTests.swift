@@ -16,6 +16,22 @@ final class InstagramRoutePolicyTests: XCTestCase {
         XCTAssertEqual(c("https://m.instagram.com/"), .blocked)
     }
 
+    // M6: composer mode needs to recognise home without changing how it is classified
+    func testIsHome() {
+        XCTAssertTrue(InstagramRoutePolicy.isHome(u("https://www.instagram.com/")))
+        XCTAssertTrue(InstagramRoutePolicy.isHome(u("https://www.instagram.com")))
+        XCTAssertTrue(InstagramRoutePolicy.isHome(u("https://www.instagram.com/?hl=en")))
+        XCTAssertTrue(InstagramRoutePolicy.isHome(InstagramRoutePolicy.homeURL))
+        XCTAssertFalse(InstagramRoutePolicy.isHome(u("https://www.instagram.com/direct/inbox/")))
+        XCTAssertFalse(InstagramRoutePolicy.isHome(u("https://www.instagram.com/explore/")))
+        XCTAssertFalse(InstagramRoutePolicy.isHome(u("https://example.com/")))
+        XCTAssertFalse(InstagramRoutePolicy.isHome(u("https://instagram.com.evil.com/")))
+    }
+
+    func testHomeStaysBlockedByClassify() {
+        XCTAssertEqual(InstagramRoutePolicy.classify(InstagramRoutePolicy.homeURL), .blocked)
+    }
+
     // Explore
     func testExploreBlocked() {
         XCTAssertEqual(c("https://www.instagram.com/explore/"), .blocked)

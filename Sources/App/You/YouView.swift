@@ -2,6 +2,7 @@ import SwiftUI
 
 /// You: the signed-in user's own Instagram profile in the shared web surface. The username is auto-detected
 /// from Instagram's page (see `InjectedScripts.ownProfileJS`); typing it in is only the fallback.
+/// The + button opens the story composer: a full-screen cover where Instagram's home page is allowed (feed hidden).
 struct YouView: View {
     @EnvironmentObject private var session: InstagramSession
     @EnvironmentObject private var surface: WebSurfaceController
@@ -11,7 +12,7 @@ struct YouView: View {
             Theme.bg
         } else if surface.ownUsername != nil {
             VStack(spacing: 0) {
-                header
+                profileHeader
                     .padding(.horizontal, Spacing.screenEdge)
                     .padding(.vertical, Spacing.s)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -23,6 +24,7 @@ struct YouView: View {
             // show(.ownProfile) would be skipped as already-current (same reason as Find people).
             .onAppear { surface.show(.ownProfile, reload: true) }
             .onChange(of: surface.ownUsername) { _ in surface.show(.ownProfile, reload: true) }
+            .fullScreenCover(isPresented: composerPresented) { composerCover }
         } else {
             fallback
         }
@@ -30,6 +32,43 @@ struct YouView: View {
 
     private var header: some View {
         Text("You").font(Theme.largeTitle).foregroundStyle(Theme.text)
+    }
+
+    private var profileHeader: some View {
+        HStack {
+            header
+            Spacer(minLength: Spacing.s)
+            IconButton(systemImage: "plus") { surface.startComposer() }
+                .accessibilityLabel("Post story")
+        }
+    }
+
+    /// Closing goes through `endComposer()` so the web view is always handed back to Messages.
+    private var composerPresented: Binding<Bool> {
+        Binding(get: { surface.composerOpen }, set: { if !$0 { surface.endComposer() } })
+    }
+
+    private var composerCover: some View {
+        ZStack(alignment: .topTrailing) {
+            Theme.bg.ignoresSafeArea()
+            WebSurface()
+            IconButton(systemImage: "xmark") { surface.endComposer() }
+                .accessibilityLabel("Close")
+                .padding(Spacing.s)
+        }
+        .overlay(alignment: .bottom) {
+            if let hint = surface.composerHint {
+                Text(hint)
+                    .font(Theme.label)
+                    .foregroundStyle(Theme.text)
+                    .padding(.horizontal, Spacing.l)
+                    .padding(.vertical, Spacing.s)
+                    .background(Capsule().fill(Theme.raise))
+                    .padding(.bottom, Spacing.xl)
+            }
+        }
+        .preferredColorScheme(.dark)
+        .tint(Theme.gold)
     }
 
     /// No username known yet: Messages has not been opened since install/Reset, or detection failed.

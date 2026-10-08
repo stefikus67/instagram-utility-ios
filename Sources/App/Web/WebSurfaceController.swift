@@ -20,6 +20,8 @@ final class WebSurfaceController: NSObject, ObservableObject {
         /// The signed-in user's own profile. Needs `ownUsername` (auto-detected or typed); `show` does nothing
         /// until it is known.
         case ownProfile
+        /// Instagram's home page with its feed hidden, used only while the story composer cover is open.
+        case composer
     }
 
     /// True once the content rule list has been attached (or its compile failed and we proceed without it,
@@ -31,6 +33,11 @@ final class WebSurfaceController: NSObject, ObservableObject {
     /// (or typed in as a fallback). Persisted so the You tab works straight after relaunch.
     @Published private(set) var ownUsername: String?
     private static let ownUsernameKey = "iuOwnUsername"
+    /// True while the full-screen story composer is up. The cover binds to it, and the login sheet must not
+    /// stack on top of it. Set only by `startComposer()` / `endComposer()`.
+    @Published private(set) var composerOpen = false
+    /// Shown over the composer when the script could not find Instagram's + button; nil otherwise.
+    @Published private(set) var composerHint: String?
 
     let webView: WKWebView
     /// Set by the session. While signed out, a blocked "/" is just Instagram's login landing, so the
@@ -65,7 +72,11 @@ final class WebSurfaceController: NSObject, ObservableObject {
         super.init()
 
         navigationGuard = NavigationGuard(webView: webView, diagnostics: diagnostics) { [weak self] in
-            self?.onPageFinished()
+            self?.pageFinished()
+        }
+        // Deferred a turn: the guard fires this from inside a navigation callback, and ending the composer loads a page.
+        navigationGuard.onComposerFinished = { [weak self] in
+            Task { @MainActor in self?.endComposer() }
         }
         installScripts()
         let bridge = ScriptBridge()
@@ -74,6 +85,9 @@ final class WebSurfaceController: NSObject, ObservableObject {
         let ownBridge = OwnUsernameBridge()
         ownBridge.target = self
         userContent.add(ownBridge, name: Self.ownUsernameMessageName)
+        let composerBridge = ComposerBridge()
+        composerBridge.target = self
+        userContent.add(composerBridge, name: Self.composerMessageName)
 
         // Compile/attach the firewall right away; loads wait for it (see `load`).
         prepareTask = Task { [weak self] in await self?.attachContentRules() }
@@ -90,6 +104,8 @@ final class WebSurfaceController: NSObject, ObservableObject {
     /// Points the shared web view at a surface. Re-showing the surface already on screen is a no-op so a
     /// tab switch does not throw away an open conversation; pass `reload` to force it (e.g. "Inbox").
     func show(_ surface: Surface, reload: Bool = false) {
+        // While the composer is up it owns the web view; a tab's onAppear must not re-point it.
+        if composerOpen && surface != .composer { return }
         if !reload, currentSurface == surface { return }
         guard let url = self.url(for: surface) else { return }
         currentSurface = surface
@@ -106,6 +122,8 @@ final class WebSurfaceController: NSObject, ObservableObject {
     /// Also forgets the detected username: Reset means a possibly different account.
     func resetNavigationState() {
         navigationGuard.reset()
+        composerOpen = false
+        composerHint = nil
         ownUsername = nil
         UserDefaults.standard.removeObject(forKey: Self.ownUsernameKey)
         showLogin()
@@ -114,6 +132,25 @@ final class WebSurfaceController: NSObject, ObservableObject {
     /// "Back to chat" after a one-shot DM media view.
     func returnToConversation() {
         navigationGuard.returnToLastDirect()
+    }
+
+    /// Opens the story composer: allows Instagram's home page (feed hidden by CSS) and, once it has loaded,
+    /// has the injected script tap Instagram's own + button. The user picks Story and posts in Instagram's own UI.
+    func startComposer() {
+        composerHint = nil
+        navigationGuard.composerMode = true
+        composerOpen = true
+        show(.composer, reload: true)
+    }
+
+    /// Closes the composer (X button, or the navigation guard saw the post finish) and returns to Messages.
+    func endComposer() {
+        guard composerOpen else { return }
+        composerOpen = false
+        composerHint = nil
+        navigationGuard.composerMode = false
+        silence()
+        show(.messages, reload: true)
     }
 
     /// Silences the page when it is not on screen (audio playing, mic open) without navigating away.
@@ -143,6 +180,7 @@ final class WebSurfaceController: NSObject, ObservableObject {
         case .ownProfile: return ownUsername.flatMap { InstagramRoutePolicy.profileURL(username: $0) }
         case .profile(let username): return InstagramRoutePolicy.profileURL(username: username)
         case .search: return InstagramRoutePolicy.searchURL
+        case .composer: return InstagramRoutePolicy.homeURL
         }
     }
 
@@ -155,6 +193,13 @@ final class WebSurfaceController: NSObject, ObservableObject {
 
     private static let blockedMessageName = "iuBlocked"
     private static let ownUsernameMessageName = "iuOwnUsername"
+    private static let composerMessageName = "iuComposer"
+
+    private func pageFinished() {
+        onPageFinished()
+        guard navigationGuard.composerMode else { return }
+        webView.evaluateJavaScript("window.__iuStartComposer && window.__iuStartComposer()", completionHandler: nil)
+    }
 
     private func attachContentRules() async {
         let list = await Self.contentRuleList()
@@ -204,11 +249,34 @@ final class WebSurfaceController: NSObject, ObservableObject {
         navigationGuard.handleBlockedPath(path)
     }
 
+    // MARK: - iuComposer bridge
+
+    /// `opened`: the script tapped + (nothing to show). `notfound`: it could not, so tell the user to tap + themselves.
+    fileprivate func handleComposer(result: String) {
+        guard composerOpen else { return }
+        switch result {
+        case "opened": composerHint = nil
+        case "notfound": composerHint = "Tap + at the top, then Story."
+        default: break
+        }
+    }
+
     // MARK: - iuOwnUsername bridge
 
     /// Re-detection overwrites the stored name, which handles an account switch.
     fileprivate func handleOwnUsername(_ name: String) {
         setOwnUsername(name)
+    }
+}
+
+/// Receives `iuComposer` posts from `InjectedScripts.composerJS`. Weak target, same reason as `ScriptBridge`.
+@MainActor
+private final class ComposerBridge: NSObject, WKScriptMessageHandler {
+    weak var target: WebSurfaceController?
+
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard message.frameInfo.isMainFrame, let result = message.body as? String else { return }
+        target?.handleComposer(result: result)
     }
 }
 

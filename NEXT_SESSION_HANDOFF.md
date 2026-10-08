@@ -1,5 +1,15 @@
 # Handoff — Killagram (Instagram Utility)
 
+## M6 (2026-10-08): story posting is back via composer mode (branch `m6-story-composer`, device-unverified)
+Plan: `docs/superpowers/plans/2026-10-08-m6-story-composer.md`. Device checklist: `docs/IPHONE_INSTALL.md` §6.
+- You tab → **+** opens a full-screen cover. Instagram's home page `/` is allowed **only while that cover is open**
+  (`NavigationGuard.composerMode`; `InstagramRoutePolicy.classify` still says home is blocked). The feed is hidden by CSS
+  (`html[data-iu-composer] main article / [role="feed"]`); `InjectedScripts.composerJS` taps Instagram's own **New post** (+)
+  button once; the user picks Story and posts in Instagram's own UI. The cover closes when Instagram returns to home/inbox/a
+  profile after a `/create/` page, or via the X. `Settings`/tabs untouched.
+- **Fragile:** `svg[aria-label="New post"]` (the + lookup), the feed selectors (`main article`, `main [role="feed"]`), and the
+  assumption that Instagram visits a `/create/...` URL (needed for the auto-close; the X always works).
+
 ## M5 (2026-10-07): own-account pages allowed (edit profile, settings /accounts/*, /archive/, /your_activity/; logout + signup stay blocked); unread-only toggle removed (owner: did not work on device, not needed). M4 device-tested OK and merged to main (username had to be typed — auto-detect missed; owner fine with that).
 
 ## State (2026-10-07 — M4 implemented on branch `m4-profile-settings`, not merged, device-unverified)

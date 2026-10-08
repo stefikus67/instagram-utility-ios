@@ -22,6 +22,17 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
     private var redirectInFlight: URL?
     private var redirectTimeout: Task<Void, Never>?
 
+    /// Set by the controller while the story composer cover is open. Only then is Instagram's home page
+    /// reachable (the feed itself is hidden by CSS); `InstagramRoutePolicy.classify` still calls it blocked.
+    var composerMode = false {
+        didSet { if composerMode != oldValue { resetComposerProgress() } }
+    }
+    /// Fired once when, in composer mode, the user lands back on home, the inbox or a profile after having
+    /// been on a /create/ page: Instagram goes back there after posting.
+    var onComposerFinished: () -> Void = {}
+    private var composerVisitedCreate = false
+    private var composerFinishedFired = false
+
     init(webView: WKWebView, diagnostics: DiagnosticsStore, onPageFinished: @escaping () -> Void) {
         self.webView = webView
         self.diagnostics = diagnostics
@@ -39,7 +50,20 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
         lastAllowedURL = nil
         lastDirectURL = nil
         lastSafeURL = nil
+        composerMode = false
+        resetComposerProgress()
         clearRedirectInFlight()
+    }
+
+    private func resetComposerProgress() {
+        composerVisitedCreate = false
+        composerFinishedFired = false
+    }
+
+    /// The route policy's verdict, except that home is allowed while the composer is open.
+    private func routeCategory(for url: URL) -> RouteCategory {
+        if composerMode && InstagramRoutePolicy.isHome(url) { return .createAllowed }
+        return InstagramRoutePolicy.classify(url, from: lastAllowedURL)
     }
 
     func returnToLastDirect() {
@@ -50,7 +74,7 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
     /// input: it is re-classified here and ignored unless the policy itself says it is blocked.
     func handleBlockedPath(_ path: String) {
         guard path.hasPrefix("/"), let url = URL(string: "https://www.instagram.com" + path),
-              InstagramRoutePolicy.classify(url, from: lastAllowedURL) == .blocked else { return }
+              routeCategory(for: url) == .blocked else { return }
         redirectToSafePage(counting: url)
     }
 
@@ -58,7 +82,7 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     private func handleObservedURL(_ url: URL) {
         if let last = lastAllowedURL, last.absoluteString == url.absoluteString { return }
-        let category = InstagramRoutePolicy.classify(url, from: lastAllowedURL)
+        let category = routeCategory(for: url)
         if category.isAllowedInApp {
             record(url, category)
         } else if category == .blocked {
@@ -72,8 +96,21 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
     private func record(_ url: URL, _ category: RouteCategory) {
         lastAllowedURL = url
         if category == .directAllowed { lastDirectURL = url }
-        if category != .mediaAllowed && category != .authAllowed { lastSafeURL = url }
+        // Home is only ever allowed for the composer; it must never become where a blocked route sends you.
+        if category != .mediaAllowed && category != .authAllowed && !InstagramRoutePolicy.isHome(url) { lastSafeURL = url }
         diagnostics.recordAllowed(url, category: category)
+        trackComposer(url, category)
+    }
+
+    private func trackComposer(_ url: URL, _ category: RouteCategory) {
+        guard composerMode, !composerFinishedFired else { return }
+        if category == .createAllowed && !InstagramRoutePolicy.isHome(url) {
+            composerVisitedCreate = true
+        } else if composerVisitedCreate,
+                  InstagramRoutePolicy.isHome(url) || category == .directAllowed || category == .profileAllowed {
+            composerFinishedFired = true
+            onComposerFinished()
+        }
     }
 
     /// Sends the web view to the last allowed non-media page (the inbox if there is none).
@@ -111,7 +148,7 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
         // Sub-frames (captcha, login widgets) are not user-visible navigation.
         if navigationAction.targetFrame?.isMainFrame == false { decisionHandler(.allow); return }
 
-        let category = InstagramRoutePolicy.classify(url, from: lastAllowedURL)
+        let category = routeCategory(for: url)
         switch category {
         case .authAllowed, .directAllowed, .profileAllowed, .storiesAllowed, .createAllowed, .mediaAllowed, .searchAllowed, .settingsAllowed:
             record(url, category)
@@ -139,7 +176,7 @@ final class NavigationGuard: NSObject, WKNavigationDelegate, WKUIDelegate {
                  for navigationAction: WKNavigationAction,
                  windowFeatures: WKWindowFeatures) -> WKWebView? {
         guard let url = navigationAction.request.url else { return nil }
-        switch InstagramRoutePolicy.classify(url, from: lastAllowedURL) {
+        switch routeCategory(for: url) {
         case .external: openExternally(url)
         case .blocked: diagnostics.recordBlocked(url)
         default: webView.load(navigationAction.request)

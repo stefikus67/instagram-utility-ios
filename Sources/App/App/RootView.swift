@@ -8,7 +8,8 @@ struct RootView: View {
     @State private var tab: AppTab = .messages
 
     private var loginRequired: Binding<Bool> {
-        Binding(get: { session.authState == .loggedOut }, set: { _ in })
+        // Not while the story composer cover is up: the login sheet must never stack on it.
+        Binding(get: { session.authState == .loggedOut && !surface.composerOpen }, set: { _ in })
     }
 
     var body: some View {
@@ -36,6 +37,10 @@ struct RootView: View {
         }
         .onChange(of: tab) { newTab in
             if newTab == .messages { surface.show(.messages) } else { surface.silence() }
+        }
+        .onChange(of: surface.composerOpen) { open in
+            // Closing the composer hands the web view back to Messages, so show that tab.
+            if !open { tab = .messages }
         }
         .onChange(of: session.authState) { state in
             // After login (or Reset then login) the web view is still on Instagram's login flow.
