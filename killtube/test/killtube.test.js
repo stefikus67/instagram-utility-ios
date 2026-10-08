@@ -119,3 +119,83 @@ test('metadata: run-at document-start, both hosts matched, no grants', () => {
 test('script parses as JavaScript', () => {
   assert.doesNotThrow(() => new vm.Script(SOURCE, { filename: 'killtube.user.js' }));
 });
+
+// ---------------------------------------------------------------
+// CSS
+// ---------------------------------------------------------------
+
+const REQUIRED_SELECTORS = [
+  // Shorts, mobile
+  'ytm-shorts-lockup-view-model',
+  'grid-shelf-view-model:has(ytm-shorts-lockup-view-model)',
+  'ytm-reel-shelf-renderer',
+  'ytm-reel-item-renderer',
+  'ytm-item-section-renderer:has(> lazy-list > grid-shelf-view-model ytm-shorts-lockup-view-model)',
+  'a.reel-item-endpoint',
+  // Shorts, desktop
+  'ytd-reel-shelf-renderer',
+  'ytd-rich-shelf-renderer[is-shorts]',
+  'ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts])',
+  // runtime marker
+  '[data-killtube-hide]',
+  // Up next
+  'ytm-item-section-renderer[section-identifier="related-items"]',
+  '#related',
+  'ytd-watch-next-secondary-results-renderer',
+  '.ytp-endscreen-content',
+  '.ytp-ce-element',
+  '.ytm-autonav-bar',
+  'ytm-autonav-endscreen-renderer',
+  // home feed
+  'ytm-browse ytm-rich-grid-renderer',
+  'ytd-browse[page-subtype="home"] #contents'
+];
+
+test('CSS: contains every required selector', () => {
+  for (const sel of REQUIRED_SELECTORS) {
+    assert.ok(K.CSS.includes(sel), `CSS is missing ${sel}`);
+  }
+});
+
+test('CSS: every hide rule is display:none !important and stands alone', () => {
+  for (const sel of K.HIDE_SELECTORS) {
+    assert.ok(K.CSS.includes(`${sel}{display:none !important}`), `rule for ${sel}`);
+    assert.ok(!sel.includes(','), `selector must not be a list: ${sel}`);
+  }
+});
+
+test('CSS: home feed hiding is scoped to the home page', () => {
+  assert.ok(K.CSS.includes('html[data-killtube-home] ytm-browse ytm-rich-grid-renderer'));
+  assert.ok(
+    !/(^|\n)ytm-browse ytm-rich-grid-renderer\{/.test(K.CSS),
+    'an unscoped mobile grid rule would hide channel pages'
+  );
+});
+
+test('CSS: never hides comments, player, title/metadata or playlist panels', () => {
+  const NEVER = [
+    'comments-entry-point-teaser-view-model',
+    'ytm-comment-section-renderer',
+    'ytd-comments',
+    'ytd-comment',
+    'ytm-comment',
+    'ytm-slim-video-metadata',
+    'ytm-slim-owner',
+    'ytm-playlist-panel',
+    'ytd-playlist-panel',
+    'ytm-watch-metadata',
+    'ytd-watch-metadata',
+    'html5-video-player',
+    '#movie_player',
+    'ytm-player',
+    'video'
+  ];
+  const selectorPart = K.CSS.split('\n')
+    .map((rule) => rule.slice(0, rule.indexOf('{')))
+    .join('\n');
+  for (const frag of NEVER) {
+    assert.ok(!selectorPart.includes(frag), `CSS selector mentions ${frag}`);
+  }
+  // the blunt version for the three names the plan calls out
+  for (const frag of NEVER.slice(0, 3)) assert.ok(!K.CSS.includes(frag));
+});
