@@ -16,7 +16,7 @@ profile the user deliberately opened or something someone sent them.
 4. Never log, display or commit cookies, session ids, tokens or user data. Fixtures use fake names.
 5. Every colour/size in native views comes from `Theme` / `Spacing` / `Metrics` / `Radius` / `TypeScale`.
    No raw numbers or hex in views. Token tests fail the build if the system drifts.
-6. **Injected JS safety (enforced by guardrail test):** Injected JavaScript may only hide/navigate/scroll/set CSS classes/override `screen.orientation`. Never read cookies/tokens, never fetch/XHR, never access IG's data structures. Injected JS is defensive and device-verified only; behaviour is not CI-tested.
+6. **Injected JS safety (enforced by guardrail test):** Injected JavaScript may only hide/navigate/scroll/set CSS classes/override `screen.orientation`, read a nav link's `href` (own username), and — only when native asks, in story-composer mode — click Instagram's own + ("New post") button once. Never read cookies/tokens, never fetch/XHR, never access IG's data structures. Injected JS is defensive and device-verified only; behaviour is not CI-tested.
 
 ## Where things go
 | Concern | Location |

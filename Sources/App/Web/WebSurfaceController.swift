@@ -36,6 +36,10 @@ final class WebSurfaceController: NSObject, ObservableObject {
     /// True while the full-screen story composer is up. The cover binds to it, and the login sheet must not
     /// stack on top of it. Set only by `startComposer()` / `endComposer()`.
     @Published private(set) var composerOpen = false
+    /// True from opening the composer until the script reports back (or a timeout): the cover keeps Instagram's
+    /// page under an opaque veil meanwhile, so the feed never flashes before the CSS hides it.
+    @Published private(set) var composerVeiled = false
+    private var veilTimeout: Task<Void, Never>?
     /// Shown over the composer when the script could not find Instagram's + button; nil otherwise.
     @Published private(set) var composerHint: String?
 
@@ -140,6 +144,14 @@ final class WebSurfaceController: NSObject, ObservableObject {
         composerHint = nil
         navigationGuard.composerMode = true
         composerOpen = true
+        composerVeiled = true
+        veilTimeout?.cancel()
+        // Safety net: the script gives up after 10 s; never leave the veil up if it never reports.
+        veilTimeout = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 12_000_000_000)
+            guard !Task.isCancelled else { return }
+            self?.composerVeiled = false
+        }
         show(.composer, reload: true)
     }
 
@@ -148,6 +160,8 @@ final class WebSurfaceController: NSObject, ObservableObject {
         guard composerOpen else { return }
         composerOpen = false
         composerHint = nil
+        composerVeiled = false
+        veilTimeout?.cancel()
         navigationGuard.composerMode = false
         silence()
         show(.messages, reload: true)
@@ -254,6 +268,8 @@ final class WebSurfaceController: NSObject, ObservableObject {
     /// `opened`: the script tapped + (nothing to show). `notfound`: it could not, so tell the user to tap + themselves.
     fileprivate func handleComposer(result: String) {
         guard composerOpen else { return }
+        composerVeiled = false
+        veilTimeout?.cancel()
         switch result {
         case "opened": composerHint = nil
         case "notfound": composerHint = "Tap + at the top, then Story."

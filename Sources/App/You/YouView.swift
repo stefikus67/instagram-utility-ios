@@ -52,6 +52,11 @@ struct YouView: View {
         ZStack(alignment: .topTrailing) {
             Theme.bg.ignoresSafeArea()
             WebSurface()
+            if surface.composerVeiled {
+                // Covers Instagram's home until the + menu is open, so the feed never flashes.
+                Theme.bg.ignoresSafeArea()
+                    .overlay { ProgressView().tint(Theme.gold) }
+            }
             IconButton(systemImage: "xmark") { surface.endComposer() }
                 .accessibilityLabel("Close")
                 .padding(Spacing.s)
